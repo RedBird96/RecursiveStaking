@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../interfaces/lido/IWstETH.sol";
-import "../interfaces/weth/IWETH.sol";
-import "../interfaces/IStrategyVault.sol";
-import "./1inch/OneinchCaller.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IWstETH} from "../interfaces/lido/IWstETH.sol";
+import {IWETH} from "../interfaces/weth/IWETH.sol";
+import {IStrategyVault} from "../interfaces/IStrategyVault.sol";
+import {OneinchCaller} from "./1inch/OneinchCaller.sol";
 
 /**
  * @title VaultStETHWrapper contract

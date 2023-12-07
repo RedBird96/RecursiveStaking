@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/utils/Address.sol";
-import "../../interfaces/1inch/IAggregationRouterV5.sol";
+import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {Address} from "lib/openzeppelin-contracts/contracts/utils/Address.sol";
+import {IAggregationExecutor,IAggregationRouterV5} from "../../interfaces/1inch/IAggregationRouterV5.sol";
 
 /**
  * @title OneinchCaller contract

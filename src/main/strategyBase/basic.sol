@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./variables.sol";
-import "../lendingLogic/base/ILendingLogic.sol";
-import "../../interfaces/IStrategyVault.sol";
+import {OwnableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Variables} from "./variables.sol";
+import {ILendingLogic} from "../lendingLogic/base/ILendingLogic.sol";
+import {IStrategyVault} from "../../interfaces/IStrategyVault.sol";
 
 /**
  * @title Basic contract

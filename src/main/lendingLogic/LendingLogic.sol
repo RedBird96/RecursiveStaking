@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../interfaces/aave/v2/IPoolV2.sol";
-import "../../interfaces/aave/v3/IPoolV3.sol";
-import "../../interfaces/aave/IAaveOracle.sol";
-import "../../interfaces/aave/IVariableDebtToken.sol";
-import "../../interfaces/compound/v3/ICWETHV3.sol";
-import "../../interfaces/morpho/IMorphoAaveV2.sol";
-import "../../interfaces/morpho/IMorphoAaveLens.sol";
-import "../../interfaces/lido/IWstETH.sol";
-import "./base/BasicLogic.sol";
-import "./base/ILendingLogic.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IPoolV2} from "../../interfaces/aave/v2/IPoolV2.sol";
+import {IPoolV3} from "../../interfaces/aave/v3/IPoolV3.sol";
+import {IAaveOracle} from "../../interfaces/aave/IAaveOracle.sol";
+import {IVariableDebtToken} from "../../interfaces/aave/IVariableDebtToken.sol";
+import {ICWETHV3} from "../../interfaces/compound/v3/ICWETHV3.sol";
+import {IMorphoAaveV2} from "../../interfaces/morpho/IMorphoAaveV2.sol";
+import {IMorphoAaveLens} from "../../interfaces/morpho/IMorphoAaveLens.sol";
+import {IWstETH} from "../../interfaces/lido/IWstETH.sol";
+import {BasicLogic} from "./base/BasicLogic.sol";
+import {ILendingLogic} from "./base/ILendingLogic.sol";
 
 /**
  * @title LendingLogic contract
