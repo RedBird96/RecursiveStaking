@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
+import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC3156FlashLender} from "lib/openzeppelin-contracts/contracts/interfaces/IERC3156FlashLender.sol";
+import {IERC3156FlashBorrower} from "lib/openzeppelin-contracts/contracts/interfaces/IERC3156FlashBorrower.sol";
 import {IFlashLoanSimpleReceiver} from "../../interfaces/aave/v3/IFlashLoanSimpleReceiver.sol";
+import {IFlashLoanRecipient} from "../../interfaces/balancer/IFlashLoanRecipient.sol";
 import {IPoolV3} from "../../interfaces/aave/v3/IPoolV3.sol";
 import {IVault} from "../../interfaces/balancer/IVault.sol";
 import {IFlashloaner} from "../strategyBase/IFlashloaner.sol";

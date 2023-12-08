@@ -5,11 +5,12 @@ import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.so
 import {Address} from "lib/openzeppelin-contracts/contracts/utils/Address.sol";
 import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {OwnableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {ERC20Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import {ERC4626Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
-import {PausableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol";
-
-//import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {PausableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
+import {SafeERC20Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {IERC20Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import {IStrategy} from "../interfaces/IStrategy.sol";
 import {IWstETH} from "../interfaces/lido/IWstETH.sol";
 import {IWETH} from "../interfaces/weth/IWETH.sol";
@@ -25,7 +26,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
     using SafeERC20 for IWstETH;
     using SafeERC20 for IERC20;
     using SafeERC20 for IWETH;
-    //using SafeERC20Upgradeable for IERC20Upgradeable;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     address public immutable implementationAddress;
     address public constant ETH_ADDR = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -281,7 +282,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         returns (uint256 shares)
     {
         if (_assets == type(uint256).max) {
-            _assets = IERC20Upgradeable(STETH_ADDR).balanceOf(msg.sender);
+            _assets = IERC20(STETH_ADDR).balanceOf(msg.sender);
         }
         shares = super.deposit(_assets, _receiver);
     }
