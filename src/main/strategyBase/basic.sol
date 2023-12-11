@@ -10,7 +10,6 @@ import {IStrategyVault} from "../../interfaces/IStrategyVault.sol";
 
 /**
  * @title Basic contract
- * @author Cian
  * @notice This contract encompasses the basic logic of the strategy pool.
  * @dev In order to increase the code capacity of the contract, this contract 
  * will be inherited by various modules of the strategy pool. Each module 

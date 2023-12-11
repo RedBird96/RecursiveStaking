@@ -7,7 +7,6 @@ import {Events} from "./events.sol";
 
 /**
  * @title UserModule contract
- * @author Cian
  * @dev This module controls the flow of funds between the strategy contract 
  * and the vault contract when users deposit or withdraw funds.
  */

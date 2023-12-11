@@ -5,7 +5,6 @@ import {Proxy} from "../infiniteProxy/proxy.sol";
 
 /**
  * @title StrategyProxy contract
- * @author Cian
  * @dev This contract is the actual address of the strategy pool, which
  * manages all the assets. The logic of the contract is distributed among
  * various functional modules.

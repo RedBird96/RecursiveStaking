@@ -7,7 +7,6 @@ import {IAggregationExecutor,IAggregationRouterV5} from "../../interfaces/1inch/
 
 /**
  * @title OneinchCaller contract
- * @author Cian
  * @notice The focal point of interacting with the 1inch protocol.
  * @dev This contract will be inherited by the strategy contract and the
  * wrapper contract, used for the necessary exchange between ETH (WETH) and

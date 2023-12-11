@@ -16,7 +16,6 @@ import {ILendingLogic} from "./base/ILendingLogic.sol";
 
 /**
  * @title LendingLogic contract
- * @author Cian
  * @notice This contract encompasses all the content related to strategy pools
  * and lending operations involved.
  * @dev Due to significant ABI differences among different lending protocols,

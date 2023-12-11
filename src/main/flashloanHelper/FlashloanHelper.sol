@@ -14,7 +14,6 @@ import {IFlashloanHelper} from "./IFlashloanHelper.sol";
 
 /**
  * @title FlashloanHelper contract
- * @author Cian
  * @notice This contract acts as an aggregator for flash loan providers.
  * @dev Use different protocols for flash loans by using different IDs,
  * while eliminating the ABI differences between different protocols.

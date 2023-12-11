@@ -15,9 +15,10 @@ import {IStrategy} from "../interfaces/IStrategy.sol";
 import {IWstETH} from "../interfaces/lido/IWstETH.sol";
 import {IWETH} from "../interfaces/weth/IWETH.sol";
 
+import {console} from "../../test/utils/console.sol";
+
 /**
  * @title VaultStETH contract
- * @author Cian
  * @dev This contract is the logical implementation of the vault,
  * and its main purpose is to provide users with a gateway for depositing
  * and withdrawing funds and to manage user shares. 
@@ -107,7 +108,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         uint256 _deleverageExitFeeRate
     ) public initializer onlyProxy {
         __Ownable_init();
-        __ERC20_init("CIAN ETH-stETH strategy pool", "ciETH");
+        __ERC20_init("ETH-stETH strategy pool", "ciETH");
         __ERC4626_init(STETH_CONTRACT);
         strategy = IStrategy(_strategy);
         require(_feeReceiver != address(0), "Fee receiver cannot be zero address!");

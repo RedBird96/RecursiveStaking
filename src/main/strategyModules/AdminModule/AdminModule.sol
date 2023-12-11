@@ -8,7 +8,6 @@ import {Events} from "./events.sol";
 
 /**
  * @title AdminModule contract
- * @author Cian
  * @dev This module includes various functionalities for managing permissions,
  * appointments, and parameter adjustments. It allows for the management and adjustment
  * of permissions and parameters within the strategy pool, includingthe ability

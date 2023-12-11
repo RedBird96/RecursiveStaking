@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 /**
  * @title ILendingLogic
- * @author Cian
  * @notice Define the interface for the lending logic.
  */
 interface ILendingLogic {

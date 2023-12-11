@@ -11,7 +11,6 @@ import {OneinchCaller} from "./1inch/OneinchCaller.sol";
 
 /**
  * @title VaultStETHWrapper contract
- * @author Cian
  * @dev This contract is used to convert ETH into assets that the vault can accept,
  * as well as to extract assets from the vault and convert them back into ETH.
  * It facilitates the conversion between ETH and other compatible assets within the vault.
