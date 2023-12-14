@@ -10,6 +10,7 @@ contract LeverageModule is Basic {
 
     using SafeERC20 for IERC20;
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
+    address public constant balancerVault = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
 
     function onFlashLoanTwo(
         address _initiator, 
@@ -19,6 +20,13 @@ contract LeverageModule is Basic {
         bytes calldata _params
     ) external returns (bytes32) {
 
+        IWETH(WETH_ADDR).withdraw(_amount);
+        (uint256 swapGetMin, uint256 _protocolId, bytes swapBytes) = abi.decode(_params, (uint256, uint256, bytes));
+        (uint256 returnAmount_, uint256 inputAmount_) =
+            executeSwap(deposit_, ETH_ADDR, STETH_ADDR, swapBytes, swapGetMin);
+
+        ILendingLogic(lendingLogic).deposit(_protocolId, STETH_ADDR, _amount);
+        ILendingLogic(lendingLogic).borrow(_protocolId, WETH_ADDR, amount);
 
         return CALLBACK_SUCCESS;
     }
@@ -29,14 +37,14 @@ contract LeverageModule is Basic {
         uint256[] memory,
         bytes memory _callbackData
     ) external {
-        // require(msg.sender == balancerVault && executor != address(0), "Invalid call!");
-        // (uint8 fromProtocolId_, uint8 toProtocolId_, uint256 stAmount_, uint256 _debtAmount) = 
-        // abi.decode(_callbackData, (uint8, uint8, uint256, uint256));
-        // executeRepay(fromProtocolId_, WETH_ADDR, _debtAmount);
-        // executeWithdraw(fromProtocolId_, STETH_ADDR, stAmount_);
-        // executeDeposit(toProtocolId_, STETH_ADDR, stAmount_);
-        // executeBorrow(toProtocolId_, WETH_ADDR, _debtAmount);
-        // _loanTokens[0].safeTransfer(balancerVault, _loanAmounts[0]);
-        // executor = address(0);
+        require(msg.sender == balancerVault && executor != address(0), "Invalid call!");
+        (uint8 fromProtocolId_, uint8 toProtocolId_, uint256 stAmount_, uint256 _debtAmount) = 
+        abi.decode(_callbackData, (uint8, uint8, uint256, uint256));
+        executeRepay(fromProtocolId_, WETH_ADDR, _debtAmount);
+        executeWithdraw(fromProtocolId_, STETH_ADDR, stAmount_);
+        executeDeposit(toProtocolId_, STETH_ADDR, stAmount_);
+        executeBorrow(toProtocolId_, WETH_ADDR, _debtAmount);
+        _loanTokens[0].safeTransfer(balancerVault, _loanAmounts[0]);
+        executor = address(0);
     }
 }
