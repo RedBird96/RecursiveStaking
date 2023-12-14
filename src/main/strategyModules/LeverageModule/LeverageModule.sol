@@ -47,7 +47,7 @@ contract LeverageModule is Basic, OneinchCaller{
         );
         
         require(
-            IFlashloanHelper(flashloanHelper).flashLoan(address(this), WETH_ADDR, _debtAmount, dataBytes),
+            IFlashloanHelper(flashloanHelper).flashLoan(IERC3156FlashBorrower(address(this)), WETH_ADDR, _debtAmount, dataBytes),
             "flashloan failed"
         );
 
@@ -78,7 +78,7 @@ contract LeverageModule is Basic, OneinchCaller{
                 _swapData
             );
             require(
-                IFlashloanHelper(flashloanHelper).flashLoan(address(this), WETH_ADDR, _debtAmount, dataBytes),
+                IFlashloanHelper(flashloanHelper).flashLoan(IERC3156FlashBorrower(address(this)), WETH_ADDR, _debtAmount, dataBytes),
                 "flashloan failed"
             );
 
