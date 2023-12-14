@@ -7,7 +7,7 @@ import {Test} from "lib/forge-std/src/Test.sol";
 import {console} from "lib/forge-std/src/console.sol";
 import {ILeverageModule} from "./interfaces/ILeverageModule.sol";
 
-contract CounterTest is Test {
+contract LeverageModuleTest is Test {
     
     // LeverageModule lm;
     // address public owner = 0x576be7d5f3a6e64bd213c1488595042aa54be6cb;

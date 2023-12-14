@@ -7,7 +7,7 @@ import {IWETH} from "../../../interfaces/weth/IWETH.sol";
 import {Basic} from "../../strategyBase/basic.sol";
 import {FlashloanHelper} from "../../flashloanHelper/FlashloanHelper.sol";
 
-contract LeverageModule is Basic {
+contract MigrateModule is Basic {
 
     using SafeERC20 for IERC20;
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
