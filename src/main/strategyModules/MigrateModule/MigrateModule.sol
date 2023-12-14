@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IWETH} from "../../../interfaces/weth/IWETH.sol";
 import {Basic} from "../../strategyBase/basic.sol";
 import {FlashloanHelper} from "../../flashloanHelper/FlashloanHelper.sol";
 
@@ -21,12 +22,11 @@ contract LeverageModule is Basic {
     ) external returns (bytes32) {
 
         IWETH(WETH_ADDR).withdraw(_amount);
-        (uint256 swapGetMin, uint256 _protocolId, bytes swapBytes) = abi.decode(_params, (uint256, uint256, bytes));
-        (uint256 returnAmount_, uint256 inputAmount_) =
-            executeSwap(deposit_, ETH_ADDR, STETH_ADDR, swapBytes, swapGetMin);
+        (uint256 swapGetMin, uint8 _protocolId, bytes memory swapBytes) = 
+            abi.decode(_params, (uint256, uint8, bytes));
 
-        ILendingLogic(lendingLogic).deposit(_protocolId, STETH_ADDR, _amount);
-        ILendingLogic(lendingLogic).borrow(_protocolId, WETH_ADDR, amount);
+        executeDeposit(_protocolId, STETH_ADDR, _amount);
+        executeBorrow(_protocolId, WETH_ADDR, _amount);
 
         return CALLBACK_SUCCESS;
     }

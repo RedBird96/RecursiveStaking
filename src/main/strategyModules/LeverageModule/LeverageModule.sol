@@ -35,9 +35,9 @@ contract LeverageModule is Basic, OneinchCaller{
     ) external {
 
         executeDeposit(_protocolId, STETH_ADDR, _deposit);
-        uint256 ratio = getProtocolCollateralRatio(_protocolId, address(this));
+        (uint256 ratio, bool _isOkay) = getProtocolCollateralRatio(_protocolId);
         require(ratio > 80, "collateralization ratio is bigger than 80%");
-        uint256 availableBorrowsETH = getAvailableBorrowsETH(_protocolId, address(this));
+        uint256 availableBorrowsETH = getAvailableBorrowsETH(_protocolId);
         require(availableBorrowsETH < _debtAmount, "Debt Amount is too big");
 
         bytes memory dataBytes = abi.encode(
@@ -47,13 +47,12 @@ contract LeverageModule is Basic, OneinchCaller{
         );
         
         require(
-            IFlashloanHelper(flashloanHelper).flashLoan(address(this), WETH_ADDR, _debtAmount, dataBytes)
-                == CALLBACK_SUCCESS,
+            IFlashloanHelper(flashloanHelper).flashLoan(address(this), WETH_ADDR, _debtAmount, dataBytes),
             "flashloan failed"
         );
 
-        ratio = getProtocolCollateralRatio(_protocolId, address(this));
-        (uint256, uint256, uint256, uint256) = getNetAssetsInfo(address(this));
+        (ratio, _isOkay) = getProtocolCollateralRatio(_protocolId);
+        (uint256 _totalAssets, uint256 _totalDebt, uint256 _netAssets, uint256 _aggregatedRatio) = getNetAssetsInfo();
 
         uint256 balance = IERC20(STETH_ADDR).balanceOf(address(this));
     }
@@ -68,7 +67,7 @@ contract LeverageModule is Basic, OneinchCaller{
     ) external {
 
         if (_flashloanSelector == 1) {
-            uint256 maxWithdrawsStETH = getAvailableWithdrawsStETH(_protocolId, address(this));
+            uint256 maxWithdrawsStETH = getAvailableWithdrawsStETH(_protocolId);
             require(maxWithdrawsStETH < _withdraw, "Not enough balance");
 
             executeWithdraw(_protocolId, WSTETH_ADDR, _withdraw);
@@ -79,17 +78,13 @@ contract LeverageModule is Basic, OneinchCaller{
                 _swapData
             );
             require(
-                IFlashloanHelper(flashloanHelper).flashLoan(address(this), WETH_ADDR, _debtAmount, dataBytes)
-                    == CALLBACK_SUCCESS,
+                IFlashloanHelper(flashloanHelper).flashLoan(address(this), WETH_ADDR, _debtAmount, dataBytes),
                 "flashloan failed"
             );
 
-            uint ratio = getProtocolCollateralRatio(
-                _protocolId, 
-                address(this)
-            );
+            (uint256 ratio, bool _isOkay) = getProtocolCollateralRatio(_protocolId);
             (uint256 totalAssets, uint256 totalDebt, uint256 netAssets, uint256 aggregatedRatio) = 
-                getNetAssetsInfo(address(this));
+                getNetAssetsInfo();
                 
             uint256 balance = IERC20(STETH_ADDR).balanceOf(address(this));
         } else {
@@ -121,22 +116,22 @@ contract LeverageModule is Basic, OneinchCaller{
         bytes calldata _params
     ) external returns (bytes32) {
         
-        (uint256 flag, uint256 swapGetMin, uint256 _protocolId, bytes swapBytes) = 
-            abi.decode(_params, (uint256, uint256, uint256, bytes));
+        (uint256 flag, uint256 swapGetMin, uint8 _protocolId, bytes memory swapBytes) = 
+            abi.decode(_params, (uint256, uint256, uint8, bytes));
 
         if (flag == 0) {
             IWETH(WETH_ADDR).withdraw(_amount);
             
             (uint256 returnAmount_, uint256 inputAmount_) =
-                executeSwap(deposit_, ETH_ADDR, STETH_ADDR, swapBytes, swapGetMin);
+                executeSwap(_amount, ETH_ADDR, STETH_ADDR, swapBytes, swapGetMin);
 
             executeDeposit(_protocolId, STETH_ADDR, _amount);
-            executeBorrow(_protocolId, WETH_ADDR, amount);
+            executeBorrow(_protocolId, WETH_ADDR, _amount);
         } else {
-            executeRepay(_protocolId, WETH_ADDR, _debtAmount);
+            executeRepay(_protocolId, WETH_ADDR, _amount);
             executeWithdraw(_protocolId, WSTETH_ADDR, _amount);
             (uint256 returnAmount_, uint256 inputAmount_) =
-                executeSwap(deposit_, STETH_ADDR, WETH_ADDR, swapBytes, swapGetMin);
+                executeSwap(_amount, STETH_ADDR, WETH_ADDR, swapBytes, swapGetMin);
             executeBorrow(_protocolId, WETH_ADDR, _amount);
         }
 
