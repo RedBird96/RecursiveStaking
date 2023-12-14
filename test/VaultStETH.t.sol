@@ -71,12 +71,12 @@ contract VaultStETHTest is DSTest {
         lendingLogic = new LendingLogic();
         dummyImpl = new StrategyDummyImplementation();
         strategyProxy = new StrategyProxy(owner, address(dummyImpl));
-        dummyImpProxy = StrategyDummyImplementation(address(proxy));
+        dummyImpProxy = StrategyDummyImplementation(address(strategyProxy));
         bytes4[] memory adminSigArray = new bytes4[](12);
         adminSigArray[0] = 0x9DA7A701; adminSigArray[1] = 0x6817031B;  adminSigArray[2] = 0xdb4cdac3;
-        adminSigArray[3] = 0x629099ff; adminSigArray[4] = 0x629099ff;  adminSigArray[5] = 0x629099ff;
-        adminSigArray[6] = 0x629099ff; adminSigArray[7] = 0x629099ff;  adminSigArray[8] = 0x629099ff;
-        adminSigArray[9] = 0x629099ff; adminSigArray[10] = 0x629099ff; adminSigArray[11] = 0x629099ff;
+        adminSigArray[3] = 0x629099ff; adminSigArray[4] = 0xC69BEBE4;  adminSigArray[5] = 0x536DAAE5;
+        adminSigArray[6] = 0x3A54B841; adminSigArray[7] = 0xCA2E0951;  adminSigArray[8] = 0xBF877EE2;
+        adminSigArray[9] = 0x2DA4EDC3; adminSigArray[10] = 0xDF373422; adminSigArray[11] = 0xED14D17E;
         bytes4[] memory userSigArray = new bytes4[](2);
         userSigArray[0] = 0xB6B55F25; userSigArray[1] = 0x2E1A7D4D; 
         bytes4[] memory leverageSigArray = new bytes4[](6);
