@@ -1,19 +1,17 @@
-## Foundry
+## Recursive staking
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This smart contract is largely composed of Vault, Strategy, LendingLogic contracts. Vault is upgradeable ERC4626 contract and Strategy used transparenty pattern for implementing complex logic.
 
-Foundry consists of:
+Vault is purposed to provide users with a gateway for depositing and withdrawing funds and to manage user shares. 
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+LendingLogic contract encompasses all the content related to strategy pools and lending operations involved.
 
-## Documentation
+Strategy consists of:
+-   **AdminModule**: This module includes various functionalities for managing permissions, appointments, and parameter adjustments. It allows for the management and adjustment of permissions and parameters within the strategy pool, includingthe ability to appoint and dismiss administrators, adjust settings, and modify parameters as needed.
+-   **UserModule**: This module controls the flow of funds between the strategy contract and the vault contract when users deposit or withdraw funds.
+-   **ReadModule**: This is the basic module includes basic functionalities for using all contracts.
+-   **LeverageModule**: This is the core logic contracts for implementing recursive borrow/lending using flashloan.
 
-https://book.getfoundry.sh/
-
-## Usage
 
 ### Build
 
@@ -27,18 +25,6 @@ $ forge build
 $ forge test
 ```
 
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
 ### Anvil
 
 ```shell
@@ -48,19 +34,11 @@ $ anvil
 ### Deploy
 
 ```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+$ forge script DeployVault -s "vaultDeployTestnet()" --force --broadcase --verify
 ```
 
 ### Cast
 
 ```shell
 $ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
 ```
