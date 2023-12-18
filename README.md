@@ -12,6 +12,8 @@ Strategy consists of:
 -   **ReadModule**: This is the basic module includes basic functionalities for using all contracts.
 -   **LeverageModule**: This is the core logic contracts for implementing recursive borrow/lending using flashloan.
 
+## Smart Contract Architecture
+![](1.png)
 
 ### Build
 
@@ -34,7 +36,7 @@ $ anvil
 ### Deploy
 
 ```shell
-$ forge script DeployVault -s "vaultDeployTestnet()" --force --broadcase --verify
+$ forge script DeployVault -s "vaultDeployTestnet()" --force --broadcast --verify
 ```
 
 ### Cast
