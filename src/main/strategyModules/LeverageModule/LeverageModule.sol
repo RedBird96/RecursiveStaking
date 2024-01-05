@@ -108,7 +108,7 @@ contract LeverageModule is Basic, OneinchCaller{
         bytes calldata _params
     ) external returns (bytes32) {
         
-        require(_initiator == address(this), "Can not call FlashLoan");
+        require(_initiator == address(this), "Cannot call FlashLoan module");
 
         (uint8 _protocolId, uint8 _module, bytes memory _swapData) = 
             abi.decode(_params, (uint8, uint8, bytes));
