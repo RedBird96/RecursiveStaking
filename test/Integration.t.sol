@@ -15,6 +15,7 @@ import {MigrateModule} from "../src/main/strategyModules/MigrateModule/MigrateMo
 import {ReadModule} from "../src/main/strategyModules/ReadModule/ReadModule.sol";
 import {FlashloanHelper} from "../src/main/flashloanHelper/FlashloanHelper.sol";
 import {LendingLogic} from "../src/main/lendingLogic/LendingLogic.sol";
+import {ILendingLogic} from "../src/main/lendingLogic/base/ILendingLogic.sol";
 import {DSTest} from "./utils/DSTest.sol";
 import {console} from "./utils/console.sol";
 
@@ -137,122 +138,31 @@ contract IntegrationTest is Test {
         // dummyImpProxy.updateExchangePrice();
 
         uint256 firstdeposit_Amount = 1000e18;
+        uint256 seconddeposit_Amount = 2000e18;
         address firstUser = 0x02eD4a07431Bcc26c5519EbF8473Ee221F26Da8b;
-        deal(firstUser, 9000e18);
+        address secondUser = 0x702a39a9d7D84c6B269efaA024dff4037499bBa9;
+        deal(firstUser, 10e18);
+        deal(secondUser, 10e18);
 
         vm.startPrank(firstUser);
         IERC20(STETH_ADDR).approve(address(vaultProxy), firstdeposit_Amount);
+        IERC20(STETH_ADDR).approve(address(vaultProxy), seconddeposit_Amount);
         vaultProxy.deposit(firstdeposit_Amount, firstUser);
+        vaultProxy.deposit(seconddeposit_Amount, secondUser);
         vm.stopPrank();
 
         vm.prank(owner);
-        uint256 _ethAmount = 100e18;
+        uint256 stAmount = 3000e18;
         bytes memory _swapData=hex"12aa3caf0000000000000000000000001136b25047e142fa3018184793aec68fbb173ce4000000000000000000000000C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2000000000000000000000000ae7ab96520de3a18e5e111b5eaab095312d7fe840000000000000000000000001136b25047e142fa3018184793aec68fbb173ce4000000000000000000000000D6BbDE9174b1CdAa358d2Cf4D57D1a9F7178FBfF000000000000000000000000000000000000000000000000000537a5d727172f000000000000000000000000000000000000000000000000000530f83613b1f1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000008200005400003a4060ae7ab96520de3a18e5e111b5eaab095312d7fe84a1903eab00000000000000000000000042f527f50f16a103b6ccab48bccca214500c10210020d6bdbf78ae7ab96520de3a18e5e111b5eaab095312d7fe8480a06c4eca27ae7ab96520de3a18e5e111b5eaab095312d7fe841111111254eeb25477b68fb85ed929f73a960582ea4184f4";
-        dummyImpProxy.leverage(1, _ethAmount, _swapData);
+        dummyImpProxy.leverage(ILendingLogic.PROTOCOL.PROTOCOL_AAVEV3, stAmount, _swapData);
+        dummyImpProxy.updateExchangePrice();
+        (uint256 totalAssets, , , ) = dummyImpProxy.getNetAssetsInfo();
 
-        // dummyImpProxy.leverage(_ethAmount, _swapData);
-        
-        // IERC20(STETH_ADDR).approve(address(vaultProxy), firstdeposit_Amount);
-        // vaultProxy.deposit(firstdeposit_Amount, firstUser);
-        // uint256 expectedBalance = 8000e18;
-        // assertEq(IERC20(STETH_ADDR).balanceOf(firstUser), expectedBalance);
-        // assertEq(vaultProxy.balance(), 0);
-        //second user deposit stETH to vault
-        // uint256 seconddeposit_Amount = 500e18;
-        // address secondUser = vm.addr(2);
-        // deal(STETH_ADDR, secondUser, 9000e18);
-        // IERC20(STETH_ADDR).approve(address(vaultProxy), seconddeposit_Amount);
-        // vaultProxy.deposit(seconddeposit_Amount, secondUser);
-        // expectedBalance = 8500e18;
-        // assertEq(IERC20(STETH_ADDR).balanceOf(secondUser), expectedBalance);
-        // assertEq(vaultProxy.balance(), 0);
+        bytes memory _deleverageData = hex"12aa3caf000000000000000000000000e37e799d5077682fa0a244d46e5649f71457bd09000000000000000000000000ae7ab96520de3a18e5e111b5eaab095312d7fe84000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000e37e799d5077682fa0a244d46e5649f71457bd090000000000000000000000003fd49a8f37e2349a29ea701b56f10f03b08f153200000000000000000000000000000000000000000000001bb38cb09b209c000000000000000000000000000000000000000000000000001bb1117e7f9ceb435a000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001730000000000000000000000000000000000000000000001550001270000dd00a007e5c0d20000000000000000000000000000000000000000000000b900006a00005051207f39c581f595b53c5cb19bd0b3f8da6c935e2ca0ae7ab96520de3a18e5e111b5eaab095312d7fe840004ea598cb000000000000000000000000000000000000000000000000000000000000000000020d6bdbf787f39c581f595b53c5cb19bd0b3f8da6c935e2ca000a0fbb7cd060093d199263632a4ef4bb438f1feb99e57b4b5f0bd0000000000000000000005c27f39c581f595b53c5cb19bd0b3f8da6c935e2ca0c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200a0f2fa6b66c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200000000000000000000000000000000000000000000001bb221c154a7f3c2ae0000000000000000000b13a5118a898f80a06c4eca27c02aaa39b223fe8d0a0e5c4f27ead9083c756cc21111111254eeb25477b68fb85ed929f73a96058200000000000000000000000000ea4184f4";
+        uint256 withdrawAmount = 100e18;
+        dummyImpProxy.deleverage(ILendingLogic.PROTOCOL.PROTOCOL_AAVEV3, stAmount, _deleverageData);
+        vaultProxy.withdraw(withdrawAmount, secondUser, owner);
 
-        // bytes memory swapData = "0x12aa3caf00000000000000000000000092f3f71cef740ed5784874b8c70ff87ecdf33588000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee000000000000000000000000ae7ab96520de3a18e5e111b5eaab095312d7fe8400000000000000000000000092f3f71cef740ed5784874b8c70ff87ecdf335880000000000000000000000003fd49a8f37e2349a29ea701b56f10f03b08f153200000000000000000000000000000000000000000000000f87fa41d844ee61b600000000000000000000000000000000000000000000000f744da99190c168d7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002430000000000000000000000000000000000000002250001f70001ad00019300a0c9e75c48000000000000000006040000000000000000000000000000000000000000000000000001650000c900a007e5c0d20000000000000000000000000000000000000000000000a500006900001a4041c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2d0e30db002a0000000000000000000000000000000000000000000000005732515547e93d5f8ee63c1e500109830a1aaad605bbf02a9dfa7b0b92ec2fb7daac02aaa39b223fe8d0a0e5c4f27ead9083c756cc241207f39c581f595b53c5cb19bd0b3f8da6c935e2ca00004de0e9a3e0000000000000000000000000000000000000000000000000000000000000000416021e27a5e5513d6e65c4f830167390997aa84843a00443df0212400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000939d4705db07b1ab80020d6bdbf78ae7ab96520de3a18e5e111b5eaab095312d7fe8400a0f2fa6b66ae7ab96520de3a18e5e111b5eaab095312d7fe8400000000000000000000000000000000000000000000000f882f2da3054306500000000000000000000ab00d1d7e6a2880a06c4eca27ae7ab96520de3a18e5e111b5eaab095312d7fe841111111254eeb25477b68fb85ed929f73a9605820000000000000000000000000000000000000000000000000000000000ea4184f4";
-
-        // vm.startPrank(owner);
-        //protocolId = 0, flashloanSelector = 0
-        // dummyImpProxy.leverage(
-        //     0, 
-        //     0, 
-        //     1000e18, 
-        //     swapData, 
-        //     980e18, 
-        //     0
-        // );
-
-    //     assertEq(vaultProxy.balance(), firstdeposit_Amount + seconddeposit_Amount);
-    //     uint256 deleverageWithdrawFee = vaultProxy.
-    //         getDeleverageWithdrawFee(firstdeposit_Amount);
-    //     uint256 deleverageWithdrawAmount = vaultProxy.
-    //         getDeleverageWithdrawAmount(seconddeposit_Amount, false, 0);
-    //     uint256 totalAssets = vaultProxy.totalAssets();
-    //     uint256 price = dummyImpProxy.exchangePrice();
-    //     assertEq(totalAssets, price);
-    //     dummyImpProxy.updateExchangePrice();
-
-    //     //protocolId = 0, flashloanSelector = 1
-    //     dummyImpProxy.leverage(
-    //         0, 
-    //         0,  
-    //         1000e18, 
-    //         swapData, 
-    //         980e18, 
-    //         1
-    //     );
-        
-    //     totalAssets = vaultProxy.totalAssets();
-
-    //     dummyImpProxy.updateExchangePrice();
-
-    //     uint256 firstDeleverageAmount = 200e18;
-    //     dummyImpProxy.deleverage(
-    //         0, 
-    //         firstDeleverageAmount, 
-    //         1000e18, 
-    //         swapData, 
-    //         980e18, 
-    //         1
-    //     );
-    //     totalAssets = vaultProxy.totalAssets();
-    //     dummyImpProxy.updateExchangePrice();
-    //     price = dummyImpProxy.exchangePrice();
-
-    //     assertEq(price, 0);
-
-    //     //protocolId = 1, flashloanSelector = 0
-    //     dummyImpProxy.leverage(
-    //         1, 
-    //         0, 
-    //         1000e18, 
-    //         swapData, 
-    //         980e18, 
-    //         0
-    //     );
-    //     totalAssets = vaultProxy.totalAssets();
-    //     dummyImpProxy.updateExchangePrice();
-    //     price = dummyImpProxy.exchangePrice();
-
-    //     //protocolId = 1, flashloanSelector = 1
-    //     dummyImpProxy.leverage(
-    //         1, 
-    //         0, 
-    //         1000e18, 
-    //         swapData, 
-    //         980e18, 
-    //         1
-    //     );
-    //     dummyImpProxy.updateExchangePrice();
-
-    //     dummyImpProxy.deleverageAndWithdraw(
-    //         1, 
-    //         0, 
-    //         swapData, 
-    //         980e18, 
-    //         false, 
-    //         1
-    //     );
-
-    //     vm.stopPrank();
     }
 
 }

@@ -13,8 +13,6 @@ import {Basic} from "../../strategyBase/basic.sol";
 import {OneinchCaller} from "../../1inch/OneinchCaller.sol";
 import {console} from "lib/forge-std/src/console.sol";
 
-
-
 contract LeverageModule is Basic, OneinchCaller{
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
@@ -132,7 +130,6 @@ contract LeverageModule is Basic, OneinchCaller{
                 executeSwap(_amount, STETH_ADDR, WETH_ADDR, _swapData, 0);
 
             executeWithdraw(_protocolId, STETH_ADDR, returnAmount_);
-
         }
 
         IERC20(_token).approve(msg.sender, _amount + _fee);
