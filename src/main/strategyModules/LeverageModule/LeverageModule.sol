@@ -23,19 +23,26 @@ contract LeverageModule is Basic, OneinchCaller{
         LEVERAGE_MODE,
         DELEVERAGE_MODE
     }
+
     /**
     * @dev adjust position leverage according the flashloan
-    * @param _ethAmount The index number of the lending protocol.
+    * @param _protocolId Protocol Index
+    * @param _stAmount stETH token deposit amount
     * @param _swapData swap bytes data 
     */
     function leverage(
         uint8 _protocolId,
-        uint256 _ethAmount,
+        uint256 _stAmount,
         bytes calldata _swapData
     ) external onlyOwner {
 
         uint256 balance = IERC20(STETH_ADDR).balanceOf(address(this));
-        require(balance >= _ethAmount, "Insufficient stETH balance");
+        require(balance >= _stAmount, "Insufficient stETH balance");
+
+        (bool _isLeverage, uint256 _amount) = 
+            getProtocolLeverageAmount(_protocolId, true, _stAmount);
+
+        require(_isLeverage, "Not in safe Ratio");
 
         bytes memory dataBytes = abi.encode(
             uint256(IFlashloaner.MODULE.MODULE_ONE), 
@@ -49,12 +56,18 @@ contract LeverageModule is Basic, OneinchCaller{
             IERC3156FlashBorrower(
                 address(this)), 
                 WETH_ADDR, 
-                _ethAmount * 10, 
+                _amount, 
                 dataBytes
         );
 
     }
 
+    /**
+    * @dev adjust position deleverage according the flashloan
+    * @param _protocolId Protocol Index
+    * @param _stRepayAmount stETH token withdraw amount
+    * @param _swapData swap bytes data 
+    */
     function deleverage(
         uint8 _protocolId,
         uint256 _stRepayAmount,
@@ -63,6 +76,11 @@ contract LeverageModule is Basic, OneinchCaller{
 
         uint256 maxWithdrawsStETH = getAvailableWithdrawsStETH(_protocolId);
         require(maxWithdrawsStETH < _stRepayAmount, "Not enough token balance");
+
+        (bool _isLeverage, uint256 _amount) = 
+            getProtocolLeverageAmount(_protocolId, false, _stRepayAmount);
+
+        require(_isLeverage, "Not in safe Ratio");
 
         bytes memory dataBytes = abi.encode(
             uint256(IFlashloaner.MODULE.MODULE_ONE), 
@@ -76,7 +94,7 @@ contract LeverageModule is Basic, OneinchCaller{
             IERC3156FlashBorrower(
                 address(this)), 
                 WETH_ADDR, 
-                _stRepayAmount, 
+                _amount, 
                 dataBytes
         );
     }
@@ -114,7 +132,7 @@ contract LeverageModule is Basic, OneinchCaller{
                 executeSwap(_amount, STETH_ADDR, WETH_ADDR, _swapData, 0);
 
             executeWithdraw(_protocolId, STETH_ADDR, returnAmount_);
-            
+
         }
 
         IERC20(_token).approve(msg.sender, _amount + _fee);
