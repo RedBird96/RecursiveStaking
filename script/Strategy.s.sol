@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {TransparentUpgradeableProxy} from "lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {VaultStETH} from "../src/main/VaultStETH.sol";
 import {StrategyDummyImplementation} from "../src/main/StrategyDummyImplementation.sol";
 import {StrategyProxy} from "../src/main/StrategyProxy.sol";
@@ -31,14 +31,14 @@ contract DeployVault is BaseDeployer {
     FlashloanHelper public flashloanHelper;
     LendingLogic public lendingLogic;
     address public feeReceiver;
-    address public owner;
+    address public admin;
     uint256 public marketCapacity;
     uint256 public managementFeePercentage;
     uint256 public exitFeeRate;
     uint256 public deleverageExitFeeRate;
 
     function setUp() public {
-        owner = address(0x7b08155084680478FF44F26986eb0F598D3D5783);
+        admin = address(0x2ef73f60F33b167dC018C6B1DCC957F4e4c7e936);
         feeReceiver = address(0xAA172dB9612Da4c71009573e5d1Cf17f8d02B50C);
         marketCapacity = 1000e18;
         managementFeePercentage = 2;
@@ -81,16 +81,10 @@ contract DeployVault is BaseDeployer {
         flashloanHelper = new FlashloanHelper();
         lendingLogic = new LendingLogic();
         dummyImpl = new StrategyDummyImplementation();
-        strategyProxy = new StrategyProxy(owner, address(dummyImpl));
+        strategyProxy = new StrategyProxy(admin, address(dummyImpl));
         dummyImpProxy = StrategyDummyImplementation(address(strategyProxy));
 
-        _setConfiguration();
-    }
-
-    function _setConfiguration() private {
-        
-        vm.prank(owner);
-        proxy = new TransparentUpgradeableProxy(address(vault), address(owner), "");
+        proxy = new TransparentUpgradeableProxy(address(vault), tx.origin, "");
         vaultProxy = VaultStETH(payable(proxy));
         vaultProxy.initialize(
             address(dummyImpProxy), 
@@ -100,6 +94,24 @@ contract DeployVault is BaseDeployer {
             exitFeeRate, 
             deleverageExitFeeRate
         );
+
+        console.log("============================================");
+        console.log("Vault Implementation", address(vault));
+        console.log("Vault Proxy", address(vaultProxy));
+        console.log("Admin Module", address(adminProxy));
+        console.log("User Module", address(userProxy));
+        console.log("Leverage Module", address(leverageProxy));
+        console.log("Migrate Module", address(migrateProxy));
+        console.log("Read Module", address(readProxy));
+        console.log("Flashloan Helper", address(flashloanHelper));
+        console.log("LendingLogic", address(lendingLogic));
+        console.log("Strategy Dummy", address(dummyImpl));
+        console.log("Strategy Proxy", address(dummyImpProxy));
+        console.log("============================================");
+        _setConfiguration();
+    }
+
+    function _setConfiguration() private {
 
         bytes4[] memory adminSigArray = new bytes4[](12);
         adminSigArray[0] = 0x9DA7A701; adminSigArray[1] = 0x6817031B;  adminSigArray[2] = 0xdb4cdac3;
@@ -132,9 +144,8 @@ contract DeployVault is BaseDeployer {
         safeProtocolRatio[3] = 666600000000000000;
 
         address[] memory rebalancers = new address[](1);
-        rebalancers[0] = owner;
+        rebalancers[0] = tx.origin;
         
-        vm.startPrank(owner);
         strategyProxy.addImplementation(address(adminProxy), adminSigArray);
         strategyProxy.addImplementation(address(userProxy), userSigArray);
         strategyProxy.addImplementation(address(leverageProxy), leverageSigArray);
@@ -151,6 +162,6 @@ contract DeployVault is BaseDeployer {
         );
 
         dummyImpProxy.setVault(address(vaultProxy));
-        vm.stopPrank();
     }
+
 }

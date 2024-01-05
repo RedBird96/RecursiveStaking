@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import {IERC3156FlashBorrower} from "lib/openzeppelin-contracts/contracts/interfaces/IERC3156FlashBorrower.sol";
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IERC3156FlashBorrower} from "@openzeppelin/contracts/contracts/interfaces/IERC3156FlashBorrower.sol";
+import {IERC20} from "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 import {IFlashloanHelper} from "../../flashloanHelper/IFlashloanHelper.sol";
 import {IFlashloaner} from "../../strategyBase/IFlashloaner.sol";
 import {ILendingLogic} from "../../lendingLogic/base/ILendingLogic.sol";
@@ -11,99 +11,75 @@ import {IAggregationRouterV5} from "../../../interfaces/1inch/IAggregationRouter
 import {IWETH} from "../../../interfaces/weth/IWETH.sol";
 import {Basic} from "../../strategyBase/basic.sol";
 import {OneinchCaller} from "../../1inch/OneinchCaller.sol";
+import {console} from "lib/forge-std/src/console.sol";
+
+
 
 contract LeverageModule is Basic, OneinchCaller{
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
 
+    enum MODULE {
+        LEVERAGE_MODE,
+        DELEVERAGE_MODE
+    }
     /**
     * @dev adjust position leverage according the flashloan
-    * @param _protocolId The index number of the lending protocol.
-    * @param _deposit The amount of deposit for lending
-    * @param _debtAmount debt Amount for flashloan
+    * @param _ethAmount The index number of the lending protocol.
     * @param _swapData swap bytes data 
-    * @param _swapGetMin swap minimum amount
-    * @param _flashloanSelector flashloan selector
     */
     function leverage(
         uint8 _protocolId,
-        uint256 _deposit,
-        uint256 _debtAmount,
-        bytes calldata _swapData,
-        uint256 _swapGetMin,
-        uint256 _flashloanSelector
-    ) external {
+        uint256 _ethAmount,
+        bytes calldata _swapData
+    ) external onlyOwner {
 
-        executeDeposit(_protocolId, STETH_ADDR, _deposit);
-        (uint256 ratio, bool _isOkay) = getProtocolCollateralRatio(_protocolId);
-        require(ratio > 80, "collateralization ratio is bigger than 80%");
-        uint256 availableBorrowsETH = getAvailableBorrowsETH(_protocolId);
-        require(availableBorrowsETH < _debtAmount, "Debt Amount is too big");
+        uint256 balance = IERC20(STETH_ADDR).balanceOf(address(this));
+        require(balance >= _ethAmount, "Insufficient stETH balance");
 
         bytes memory dataBytes = abi.encode(
             uint256(IFlashloaner.MODULE.MODULE_ONE), 
-            uint256(IFlashloanHelper.PROVIDER(_flashloanSelector)), 
+            uint256(IFlashloanHelper.PROVIDER.PROVIDER_AAVEV3),
+            _protocolId,
+            uint8(MODULE.LEVERAGE_MODE),
             _swapData
         );
         
-        require(
-            IFlashloanHelper(flashloanHelper).flashLoan(IERC3156FlashBorrower(address(this)), WETH_ADDR, _debtAmount, dataBytes),
-            "flashloan failed"
+        IFlashloanHelper(flashloanHelper).flashLoan(
+            IERC3156FlashBorrower(
+                address(this)), 
+                WETH_ADDR, 
+                _ethAmount * 10, 
+                dataBytes
         );
 
-        (ratio, _isOkay) = getProtocolCollateralRatio(_protocolId);
-        (uint256 _totalAssets, uint256 _totalDebt, uint256 _netAssets, uint256 _aggregatedRatio) = getNetAssetsInfo();
-
-        uint256 balance = IERC20(STETH_ADDR).balanceOf(address(this));
     }
 
     function deleverage(
         uint8 _protocolId,
-        uint256 _withdraw,
-        uint256 _debtAmount,
-        bytes calldata _swapData,
-        uint256 _swapGetMin,
-        uint256 _flashloanSelector
-    ) external {
+        uint256 _stRepayAmount,
+        bytes calldata _swapData
+    ) external onlyOwner  {
 
-        if (_flashloanSelector == 1) {
-            uint256 maxWithdrawsStETH = getAvailableWithdrawsStETH(_protocolId);
-            require(maxWithdrawsStETH < _withdraw, "Not enough balance");
+        uint256 maxWithdrawsStETH = getAvailableWithdrawsStETH(_protocolId);
+        require(maxWithdrawsStETH < _stRepayAmount, "Not enough token balance");
 
-            executeWithdraw(_protocolId, WSTETH_ADDR, _withdraw);
-
-            bytes memory dataBytes = abi.encode(
-                uint256(IFlashloaner.MODULE.MODULE_ONE), 
-                uint256(IFlashloanHelper.PROVIDER(_flashloanSelector)), 
-                _swapData
-            );
-            require(
-                IFlashloanHelper(flashloanHelper).flashLoan(IERC3156FlashBorrower(address(this)), WETH_ADDR, _debtAmount, dataBytes),
-                "flashloan failed"
-            );
-
-            (uint256 ratio, bool _isOkay) = getProtocolCollateralRatio(_protocolId);
-            (uint256 totalAssets, uint256 totalDebt, uint256 netAssets, uint256 aggregatedRatio) = 
-                getNetAssetsInfo();
-                
-            uint256 balance = IERC20(STETH_ADDR).balanceOf(address(this));
-        } else {
-            
-            ILendingLogic(lendingLogic).withdraw(_protocolId, WSTETH_ADDR, _withdraw);
-        }
-
+        bytes memory dataBytes = abi.encode(
+            uint256(IFlashloaner.MODULE.MODULE_ONE), 
+            uint256(IFlashloanHelper.PROVIDER.PROVIDER_AAVEV3),
+            _protocolId,
+            uint8(MODULE.DELEVERAGE_MODE),
+            _swapData
+        );
+        
+        IFlashloanHelper(flashloanHelper).flashLoan(
+            IERC3156FlashBorrower(
+                address(this)), 
+                WETH_ADDR, 
+                _stRepayAmount, 
+                dataBytes
+        );
     }
-
-    // function deleverageAndWithdraw(
-    //     uint8 _protocolId,
-    //     uint256 _withdrawShare,
-    //     bytes calldata _swapData,
-    //     uint256 _swapGetMin,
-    //     bool _isETH,
-    //     uint256 _flashloanSelector
-    // ) external returns (uint256) {
-    //     uint256 amount = getDeleverageAmount(_withdrawShare, _protocolId);
-    // }
 
     /**
     * @dev 
@@ -116,32 +92,33 @@ contract LeverageModule is Basic, OneinchCaller{
         bytes calldata _params
     ) external returns (bytes32) {
         
-        (uint256 flag, uint256 swapGetMin, uint8 _protocolId, bytes memory swapBytes) = 
-            abi.decode(_params, (uint256, uint256, uint8, bytes));
+        require(_initiator == address(this), "Can not call FlashLoan");
 
-        if (flag == 0) {
-            IWETH(WETH_ADDR).withdraw(_amount);
-            
+        (uint8 _protocolId, uint8 _module, bytes memory _swapData) = 
+            abi.decode(_params, (uint8, uint8, bytes));
+
+        if (_module == uint8(MODULE.LEVERAGE_MODE)) {
+            uint256 balance = IERC20(_token).balanceOf(address(this));
+
             (uint256 returnAmount_, uint256 inputAmount_) =
-                executeSwap(_amount, ETH_ADDR, STETH_ADDR, swapBytes, swapGetMin);
+                executeSwap(_amount, WETH_ADDR, STETH_ADDR, _swapData, 0);
 
-            executeDeposit(_protocolId, STETH_ADDR, _amount);
-            executeBorrow(_protocolId, WETH_ADDR, _amount);
+            uint256 stBalance = IERC20(STETH_ADDR).balanceOf(address(this));
+            executeDeposit(_protocolId, STETH_ADDR, returnAmount_);
+            uint256 borrowAmount = getAvailableBorrowsETH(_protocolId);
+            executeBorrow(_protocolId, _token, borrowAmount);
         } else {
-            executeRepay(_protocolId, WETH_ADDR, _amount);
-            executeWithdraw(_protocolId, WSTETH_ADDR, _amount);
+            executeRepay(_protocolId, _token, _amount);
+
             (uint256 returnAmount_, uint256 inputAmount_) =
-                executeSwap(_amount, STETH_ADDR, WETH_ADDR, swapBytes, swapGetMin);
-            executeBorrow(_protocolId, WETH_ADDR, _amount);
+                executeSwap(_amount, STETH_ADDR, WETH_ADDR, _swapData, 0);
+
+            executeWithdraw(_protocolId, STETH_ADDR, returnAmount_);
+            
         }
 
+        IERC20(_token).approve(msg.sender, _amount + _fee);
         return CALLBACK_SUCCESS;
     }
 
-    // function getDeleverageAmount(
-    //     uint256 _share, 
-    //     uint8 _protocolId
-    // ) public view returns (uint256) {
-        
-    // }
 }

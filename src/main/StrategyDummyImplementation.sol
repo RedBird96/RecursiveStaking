@@ -102,11 +102,8 @@ contract StrategyDummyImplementation {
     // LeverageModule
     function leverage(
         uint8 _protocolId,
-        uint256 _deposit,
-        uint256 _debtAmount,
-        bytes calldata _swapData,
-        uint256 _swapGetMin,
-        uint256 _flashloanSelector
+        uint256 _ethAmount,
+        bytes calldata _swapData
     ) external {}
 
     function deleverage(

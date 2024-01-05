@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC3156FlashLender} from "lib/openzeppelin-contracts/contracts/interfaces/IERC3156FlashLender.sol";
-import {IERC3156FlashBorrower} from "lib/openzeppelin-contracts/contracts/interfaces/IERC3156FlashBorrower.sol";
+import {IERC20} from "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC3156FlashLender} from "@openzeppelin/contracts/contracts/interfaces/IERC3156FlashLender.sol";
+import {IERC3156FlashBorrower} from "@openzeppelin/contracts/contracts/interfaces/IERC3156FlashBorrower.sol";
 import {IFlashLoanSimpleReceiver} from "../../interfaces/aave/v3/IFlashLoanSimpleReceiver.sol";
 import {IFlashLoanRecipient} from "../../interfaces/balancer/IFlashLoanRecipient.sol";
 import {IPoolV3} from "../../interfaces/aave/v3/IPoolV3.sol";
 import {IVault} from "../../interfaces/balancer/IVault.sol";
 import {IFlashloaner} from "../strategyBase/IFlashloaner.sol";
 import {IFlashloanHelper} from "./IFlashloanHelper.sol";
+import {console} from "lib/forge-std/src/console.sol";
 
 /**
  * @title FlashloanHelper contract
@@ -42,7 +43,9 @@ contract FlashloanHelper is IFlashloanHelper, IFlashLoanSimpleReceiver, IFlashLo
     {
         require(executor == address(0) && address(_receiver) == msg.sender, "FlashloanHelper: In progress!");
         executor = msg.sender;
-        (, uint256 flashloanSelector_,) = abi.decode(_dataBytes, (uint256, uint256, bytes));
+        (, uint256 flashloanSelector_,,, ) = 
+            abi.decode(_dataBytes, (uint256, uint256, uint8, uint8, bytes));
+
         if (flashloanSelector_ == uint256(IFlashloanHelper.PROVIDER.PROVIDER_AAVEV3)) {
             IPoolV3(aaveV3Pool).flashLoanSimple(address(this), _token, _amount, _dataBytes, 0);
         } else if (flashloanSelector_ == uint256(IFlashloanHelper.PROVIDER.PROVIDER_BALANCER)) {
@@ -78,14 +81,21 @@ contract FlashloanHelper is IFlashloanHelper, IFlashLoanSimpleReceiver, IFlashLo
         address _initiator,
         bytes calldata _params
     ) external override returns (bool) {
+
         require(msg.sender == aaveV3Pool && _initiator == address(this), "Aave flashloan: Invalid call!");
         IERC20(_asset).safeTransfer(executor, _amount);
-        (uint256 module_,, bytes memory callBackData_) = abi.decode(_params, (uint256, uint256, bytes));
+        (uint256 module_,,uint8 protocolId_,uint8 leverageModule_,bytes memory callBackData_) = 
+            abi.decode(_params, (uint256, uint256, uint8, uint8, bytes));
+        bytes memory passBytes = abi.encode(
+            protocolId_,
+            leverageModule_,
+            callBackData_
+        );
         /// @dev There will be two modules in the strategy that need to use the flash loan operation,
         /// which are distinguished by two callback functions.
         if (module_ == uint256(IFlashloaner.MODULE.MODULE_ONE)) {
             require(
-                IFlashloaner(executor).onFlashLoanOne(executor, _asset, _amount, _premium, callBackData_)
+                IFlashloaner(executor).onFlashLoanOne(executor, _asset, _amount, _premium, passBytes)
                     == CALLBACK_SUCCESS,
                 "Aave flashloan for module one failed"
             );

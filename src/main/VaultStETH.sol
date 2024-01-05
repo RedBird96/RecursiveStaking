@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {Address} from "lib/openzeppelin-contracts/contracts/utils/Address.sol";
-import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {OwnableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {ERC20Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-import {ERC4626Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import {PausableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
-import {SafeERC20Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {IERC20Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
+import {Address} from "@openzeppelin/contracts/contracts/utils/Address.sol";
+import {SafeERC20} from "@openzeppelin/contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import {ERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import {IStrategy} from "../interfaces/IStrategy.sol";
 import {IWstETH} from "../interfaces/lido/IWstETH.sol";
 import {IWETH} from "../interfaces/weth/IWETH.sol";
@@ -53,6 +53,8 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
     uint256 public lastTimestamp;
     // Accumulated management fee as lp that can be claimed.
     uint256 public managementFeeAcc;
+    // Every user locked amount
+    mapping(address => uint256) userBalance;
 
     event UpdateStrategy(address oldStrategy, address newStrategy);
     event UpdateManagementFee(uint256 oldManagementFee, uint256 newManagementFee);
@@ -108,7 +110,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         uint256 _deleverageExitFeeRate
     ) public initializer onlyProxy {
         __Ownable_init();
-        __ERC20_init("ETH-stETH strategy pool", "ciETH");
+        __ERC20_init("ETH-stETH strategy pool", "roETH");
         __ERC4626_init(STETH_CONTRACT);
         strategy = IStrategy(_strategy);
         require(_feeReceiver != address(0), "Fee receiver cannot be zero address!");
@@ -285,6 +287,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         if (_assets == type(uint256).max) {
             _assets = IERC20(STETH_ADDR).balanceOf(msg.sender);
         }
+        userBalance[msg.sender] += _assets;
         shares = super.deposit(_assets, _receiver);
     }
 
@@ -309,7 +312,11 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         shares = previewWithdraw(_assets);
         uint256 assetsAfterFee_ = _assets - getWithdrawFee(_assets);
         uint256 stGet_ = strategy.withdraw(assetsAfterFee_);
-
+        if (userBalance[msg.sender] > _assets) {
+            userBalance[msg.sender] -= _assets;
+        } else {
+            userBalance[msg.sender] = 0;
+        }
         _withdraw(msg.sender, _receiver, _owner, stGet_, shares);
     }
 

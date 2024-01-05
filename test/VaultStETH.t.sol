@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {TransparentUpgradeableProxy} from "lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {IERC20} from "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
 import {Test} from "lib/forge-std/src/Test.sol";
 import {VaultStETH} from "../src/main/VaultStETH.sol";
 import {StrategyDummyImplementation} from "../src/main/StrategyDummyImplementation.sol";

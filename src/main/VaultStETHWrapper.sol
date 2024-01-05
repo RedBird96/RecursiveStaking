@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import {Address} from "lib/openzeppelin-contracts/contracts/utils/Address.sol";
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Address} from "@openzeppelin/contracts/contracts/utils/Address.sol";
+import {IERC20} from "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IWstETH} from "../interfaces/lido/IWstETH.sol";
 import {IWETH} from "../interfaces/weth/IWETH.sol";
 import {IStrategyVault} from "../interfaces/IStrategyVault.sol";

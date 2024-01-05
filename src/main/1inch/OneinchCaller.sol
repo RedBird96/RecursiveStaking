@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {Address} from "lib/openzeppelin-contracts/contracts/utils/Address.sol";
+import {IERC20} from "@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol";
+import {Address} from "@openzeppelin/contracts/contracts/utils/Address.sol";
 import {IAggregationExecutor,IAggregationRouterV5} from "../../interfaces/1inch/IAggregationRouterV5.sol";
+import {console} from "lib/forge-std/src/console.sol";
 
 /**
  * @title OneinchCaller contract
@@ -19,6 +20,7 @@ contract OneinchCaller {
     address public constant ETH_ADDR = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     // 1inch v5 is currently in use.
     address public constant oneInchRouter = 0x1111111254EEB25477B68fb85Ed929f73A960582;
+    // address public constant Executor = 0x1136b25047e142fa3018184793aec68fbb173ce4;
 
     /**
      * @dev Separate the function signature and detailed parameters from the calldata.
@@ -78,6 +80,7 @@ contract OneinchCaller {
         require(address(this) == desc_.dstReceiver, "1inch: Invalid receiver!");
         require(IERC20(_srcToken) == desc_.srcToken && IERC20(_dstToken) == desc_.dstToken, "1inch: Invalid token!");
         require(_amount >= desc_.amount, "1inch: Invalid input amount!");
+        IERC20(_srcToken).approve(oneInchRouter, _amount);
         bytes memory returnData_;
         if (_srcToken == ETH_ADDR) {
             returnData_ = Address.functionCallWithValue(oneInchRouter, _swapData, _amount);

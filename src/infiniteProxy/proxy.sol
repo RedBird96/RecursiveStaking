@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Events} from "./events.sol";
-
+import {console} from "lib/forge-std/src/console.sol";
 /**
  * @dev This abstract contract provides a fallback function that delegates all calls to another contract using the EVM
  * instruction `delegatecall`.
