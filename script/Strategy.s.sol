@@ -120,9 +120,8 @@ contract DeployVault is BaseDeployer {
         adminSigArray[9] = 0x2DA4EDC3; adminSigArray[10] = 0xDF373422; adminSigArray[11] = 0xED14D17E;
         bytes4[] memory userSigArray = new bytes4[](2);
         userSigArray[0] = 0xB6B55F25; userSigArray[1] = 0x2E1A7D4D; 
-        bytes4[] memory leverageSigArray = new bytes4[](6);
-        leverageSigArray[0] = 0xA1555EC9; leverageSigArray[1] = 0x5B3CC4CB; leverageSigArray[2] = 0x68454B7A;
-        leverageSigArray[3] = 0xAF8658AB; leverageSigArray[4] = 0x3BFAA7E3; leverageSigArray[5] = 0x335F438B;
+        bytes4[] memory leverageSigArray = new bytes4[](3);
+        leverageSigArray[0] = 0x57900342; leverageSigArray[1] = 0x4f0c343e; leverageSigArray[2] = 0xaf8658ab;
         bytes4[] memory migrateSigArray = new bytes4[](2);
         migrateSigArray[0] = 0x38564665; migrateSigArray[1] = 0x04E0A655; 
         bytes4[] memory readSigArray = new bytes4[](28);
