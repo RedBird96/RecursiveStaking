@@ -38,4 +38,8 @@ contract UserModule is Events {
 
         emit Withdraw(_amount);
     }
+
+    function getAvailableLogicBalance() external onlyOwner returns(uint256 balance) {
+        balance = IERC20(STETH_ADDR).balanceOf(address(this));
+    }
 }

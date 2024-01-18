@@ -122,9 +122,7 @@ contract StrategyDummyImplementation {
         uint8 _protocolId,
         uint256 _withdrawShare,
         bytes calldata _swapData,
-        uint256 _swapGetMin,
-        bool _isETH,
-        uint256 _flashloanSelector
+        uint256 _swapGetMin
     ) external returns (uint256) {}
 
     function onFlashLoanOne(address _initiator, address _token, uint256 _amount, uint256 _fee, bytes calldata _params)

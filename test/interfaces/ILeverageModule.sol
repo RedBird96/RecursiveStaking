@@ -7,8 +7,7 @@ interface ILeverageModule {
         uint256 _deposit,
         uint256 _debtAmount,
         bytes calldata _swapData,
-        uint256 _swapGetMin,
-        uint256 _flashloanSelector
+        uint256 _swapGetMin
     ) external;
 
     function deleverage(
@@ -16,17 +15,14 @@ interface ILeverageModule {
         uint256 _withdraw,
         uint256 _debtAmount,
         bytes calldata _swapData,
-        uint256 _swapGetMin,
-        uint256 _flashloanSelector
+        uint256 _swapGetMin
     ) external;
 
     function deleverageAndWithdraw(
         uint8 _protocolId,
         uint256 _withdrawShare,
         bytes calldata _swapData,
-        uint256 _swapGetMin,
-        bool _isETH,
-        uint256 _flashloanSelector
+        uint256 _swapGetMin
     ) external returns (uint256);
 
     function onFlashLoanOne(address _initiator, address _token, uint256 _amount, uint256 _fee, bytes calldata _params)

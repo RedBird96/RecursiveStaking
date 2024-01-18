@@ -19,7 +19,7 @@ contract LeverageModule is Basic, OneinchCaller{
     using SafeERC20 for IERC20;
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
-    IAaveOracle public constant aaveOracleV3 = IAaveOracle(0x54586bE62E3c3580375aE3723C145253060Ca0C2);
+    IAaveOracle public aaveOracleV3 = IAaveOracle(0x54586bE62E3c3580375aE3723C145253060Ca0C2);
     address public testSender;
 
     uint256 public logicDepositAmount;
@@ -31,6 +31,7 @@ contract LeverageModule is Basic, OneinchCaller{
 
     event Leverage(uint256 debitAmount, uint256 borrowAmount);
     event Deleverage(uint256 repayAmount, uint256 withdrawAmount);
+    event DeleverageWithdraw(uint256 repayAmount, uint256 withdrawAmount);
 
     function testSwap(uint256 amount, address token, bool direct) public returns(uint256 returnAmount) {
         
@@ -99,7 +100,7 @@ contract LeverageModule is Basic, OneinchCaller{
         uint256 _wEthDebtDeleverageAmount,
         bytes calldata _swapData,
         uint256 _minimumAmount
-    ) external onlyOwner  {
+    ) external onlyOwner {
 
         (uint256 totalAssets,,,) = getNetAssetsInfo();
         require(totalAssets >= _wEthDebtDeleverageAmount, "Not enough token balance");
@@ -125,6 +126,35 @@ contract LeverageModule is Basic, OneinchCaller{
     }
 
     /**
+    * @dev adjust position deleverage according the flashloan
+    * @param _protocolId Protocol Index
+    * @param _stETHWithdrawAmount stETH token withdraw amount
+    * @param _swapData swap bytes data 
+    * @param _minimumAmount swap bytes data 
+    */
+    function deleverageAndWithdraw(
+        uint8 _protocolId,
+        uint256 _stETHWithdrawAmount,
+        bytes calldata _swapData,
+        uint256 _minimumAmount
+    ) external onlyVault {
+
+        (uint256 totalAssets,,,) = getNetAssetsInfo();
+        require(totalAssets >= _stETHWithdrawAmount, "Not enough token balance");
+
+        uint256 wEthPrice_ = aaveOracleV3.getAssetPrice(WETH_ADDR);
+        uint256 wstEthPrice_ = aaveOracleV3.getAssetPrice(WSTETH_ADDR);
+
+        uint256 wethWithdrawAmount = _stETHWithdrawAmount * wstEthPrice_ / wEthPrice_;
+
+        executeRepay(_protocolId, WETH_ADDR, wethWithdrawAmount);
+
+        executeWithdraw(_protocolId, STETH_ADDR, _stETHWithdrawAmount);
+
+        IERC20(STETH_ADDR).safeTransfer(vault, _stETHWithdrawAmount);
+    }
+
+    /**
     * @dev 
     */
     function onFlashLoanOne(
@@ -137,11 +167,11 @@ contract LeverageModule is Basic, OneinchCaller{
         
         require(_initiator == address(this), "Cannot call FlashLoan module");
 
-        (uint8 _protocolId, uint8 _module, uint256 _operatorAmount, uint256 _minimumAmount, bytes memory _swapData) = 
+        (uint8 _protocolId, uint8 _module, , uint256 _minimumAmount, bytes memory _swapData) = 
             abi.decode(_params, (uint8, uint8, uint256, uint256, bytes));
 
         if (_module == uint8(MODULE.LEVERAGE_MODE)) {
-            (uint256 returnAmount_, uint256 spentAmount_) =
+            (uint256 returnAmount_,) =
                 executeSwap(_amount, WETH_ADDR, STETH_ADDR, _swapData, _minimumAmount);
 
             executeDeposit(_protocolId, STETH_ADDR, returnAmount_ + logicDepositAmount);
@@ -165,7 +195,7 @@ contract LeverageModule is Basic, OneinchCaller{
 
             executeSwap(_amount, STETH_ADDR, WETH_ADDR, _swapData, _minimumAmount);
 
-            emit Leverage(returnAmount_ + logicDepositAmount, borrowAmount);
+            emit Deleverage(wethWithdrawAmount, _amount);
         }
 
         IERC20(_token).approve(msg.sender, _amount + _fee);

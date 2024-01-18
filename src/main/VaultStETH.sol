@@ -55,6 +55,8 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
     uint256 public managementFeeAcc;
     // Every user locked amount
     mapping(address => uint256) userBalance;
+    // Total locked amount
+    uint256 public totalLockedAmount;
 
     event UpdateStrategy(address oldStrategy, address newStrategy);
     event UpdateManagementFee(uint256 oldManagementFee, uint256 newManagementFee);
@@ -268,6 +270,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         STETH_CONTRACT.safeTransferFrom(_caller, address(this), _assets);
         _mint(_receiver, _shares);
         strategy.deposit(_assets);
+        totalLockedAmount += _assets;
         emit Deposit(_caller, _receiver, _assets, _shares);
     }
 
@@ -313,8 +316,10 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         uint256 assetsAfterFee_ = _assets - getWithdrawFee(_assets);
         uint256 stGet_ = strategy.withdraw(assetsAfterFee_);
         if (userBalance[msg.sender] > _assets) {
+            totalLockedAmount -= _assets;
             userBalance[msg.sender] -= _assets;
         } else {
+            totalLockedAmount -= userBalance[msg.sender];
             userBalance[msg.sender] = 0;
         }
         _withdraw(msg.sender, _receiver, _owner, stGet_, shares);
@@ -398,8 +403,15 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
 
         bool _isETH = (_token == ETH_ADDR || _token == WETH_ADDR) ? true : false;
         uint256 assetsGet_ = strategy.deleverageAndWithdraw(
-            _protocolId, assetsAfterFee_, _swapData, _swapGetMin, _isETH, _flashloanSelector
+            _protocolId, assetsAfterFee_, _swapData, _swapGetMin
         );
+        if (userBalance[msg.sender] > _assets) {
+            totalLockedAmount -= _assets;
+            userBalance[msg.sender] -= _assets;
+        } else {
+            totalLockedAmount -= userBalance[msg.sender];
+            userBalance[msg.sender] = 0;
+        }
         _burn(_owner, shares);
         if (_token == STETH_ADDR) {
             STETH_CONTRACT.safeTransfer(_receiver, assetsGet_);
