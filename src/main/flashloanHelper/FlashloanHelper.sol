@@ -43,8 +43,8 @@ contract FlashloanHelper is IFlashloanHelper, IFlashLoanSimpleReceiver, IFlashLo
     {
         require(executor == address(0) && address(_receiver) == msg.sender, "FlashloanHelper: In progress!");
         executor = msg.sender;
-        (, uint256 flashloanSelector_,,,, ) = 
-            abi.decode(_dataBytes, (uint256, uint256, uint8, uint8, uint256, bytes));
+        (, uint256 flashloanSelector_,,,,, ) = 
+            abi.decode(_dataBytes, (uint256, uint256, uint8, uint8, uint256, uint256, bytes));
 
         if (flashloanSelector_ == uint256(IFlashloanHelper.PROVIDER.PROVIDER_AAVEV3)) {
             IPoolV3(aaveV3Pool).flashLoanSimple(address(this), _token, _amount, _dataBytes, 0);
@@ -84,13 +84,14 @@ contract FlashloanHelper is IFlashloanHelper, IFlashLoanSimpleReceiver, IFlashLo
 
         require(msg.sender == aaveV3Pool && _initiator == address(this), "Aave flashloan: Invalid call!");
         IERC20(_asset).safeTransfer(executor, _amount);
-        (uint256 module_,,uint8 protocolId_,uint8 leverageModule_, uint256 operateAmount_, bytes memory callBackData_) = 
-            abi.decode(_params, (uint256, uint256, uint8, uint8, uint256, bytes));
+        (uint256 module_,,uint8 protocolId_,uint8 leverageModule_, uint256 operateAmount_, uint256 minimumAmount_, bytes memory callBackData_) = 
+            abi.decode(_params, (uint256, uint256, uint8, uint8, uint256, uint256, bytes));
 
         bytes memory passBytes = abi.encode(
             protocolId_,
             leverageModule_,
             operateAmount_,
+            minimumAmount_,
             callBackData_
         );
         /// @dev There will be two modules in the strategy that need to use the flash loan operation,
