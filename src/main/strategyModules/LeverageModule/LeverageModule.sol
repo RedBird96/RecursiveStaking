@@ -141,9 +141,9 @@ contract LeverageModule is Basic, OneinchCaller{
             abi.decode(_params, (uint8, uint8, uint256, uint256, bytes));
 
         if (_module == uint8(MODULE.LEVERAGE_MODE)) {
-            // (uint256 returnAmount_, uint256 spentAmount_) =
-            //     executeSwap(_amount, WETH_ADDR, STETH_ADDR, _swapData, _minimumAmount);
-            uint256 returnAmount_ = testSwap(_amount, _token, true);
+            (uint256 returnAmount_, uint256 spentAmount_) =
+                executeSwap(_amount, WETH_ADDR, STETH_ADDR, _swapData, _minimumAmount);
+
             executeDeposit(_protocolId, STETH_ADDR, returnAmount_ + logicDepositAmount);
             uint256 borrowAmount = getAvailableBorrowsETH(_protocolId);
             executeBorrow(_protocolId, _token, borrowAmount);
@@ -163,8 +163,7 @@ contract LeverageModule is Basic, OneinchCaller{
             executeRepay(_protocolId, _token, wethWithdrawAmount);
             executeWithdraw(_protocolId, STETH_ADDR, wethWithdrawAmount);
 
-            testSwap(wethWithdrawAmount, _token, false);
-            // executeSwap(_amount, STETH_ADDR, WETH_ADDR, _swapData, _minimumAmount);
+            executeSwap(_amount, STETH_ADDR, WETH_ADDR, _swapData, _minimumAmount);
 
             emit Leverage(returnAmount_ + logicDepositAmount, borrowAmount);
         }
