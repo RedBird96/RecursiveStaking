@@ -85,7 +85,7 @@ contract IntegrationTest is Test {
         bytes4[] memory userSigArray = new bytes4[](2);
         userSigArray[0] = 0xB6B55F25; userSigArray[1] = 0x2E1A7D4D; 
         bytes4[] memory leverageSigArray = new bytes4[](3);
-        leverageSigArray[0] = 0x57900342; leverageSigArray[1] = 0x4f0c343e; leverageSigArray[2] = 0xaf8658ab;
+        leverageSigArray[0] = 0x0cea859f; leverageSigArray[1] = 0x23f8194c; leverageSigArray[2] = 0xaf8658ab;
         bytes4[] memory migrateSigArray = new bytes4[](2);
         migrateSigArray[0] = 0x38564665; migrateSigArray[1] = 0x04E0A655; 
         bytes4[] memory readSigArray = new bytes4[](28);
@@ -136,32 +136,40 @@ contract IntegrationTest is Test {
     function testScenario() external {
         // dummyImpProxy.updateExchangePrice();
 
-        uint256 firstdeposit_Amount = 1000e18;
-        uint256 seconddeposit_Amount = 2000e18;
+        uint256 firstdeposit_Amount = 5e9;
+        uint256 seconddeposit_Amount = 5e9;
         address firstUser = 0x02eD4a07431Bcc26c5519EbF8473Ee221F26Da8b;
         address secondUser = 0x702a39a9d7D84c6B269efaA024dff4037499bBa9;
         deal(firstUser, 10e18);
         deal(secondUser, 10e18);
 
         vm.startPrank(firstUser);
+        IERC20(STETH_ADDR).transfer(owner, 5e11);
         IERC20(STETH_ADDR).approve(address(vaultProxy), firstdeposit_Amount);
         vaultProxy.deposit(firstdeposit_Amount, firstUser);
         IERC20(STETH_ADDR).approve(address(vaultProxy), seconddeposit_Amount);
         vaultProxy.deposit(seconddeposit_Amount, secondUser);
         vm.stopPrank();
 
-        vm.prank(owner);
-        uint256 stAmount = 3000e18;
+        vm.startPrank(owner);
+
+        uint256 minimumamount = 14e18;
+        uint256 stAmount = (firstdeposit_Amount + seconddeposit_Amount) * 3;
+        uint256 stBalance = IERC20(STETH_ADDR).balanceOf(address(dummyImpProxy));
+        IERC20(STETH_ADDR).approve(address(dummyImpProxy), stAmount);
         bytes memory _swapData=hex"12aa3caf0000000000000000000000001136B25047E142Fa3018184793aEc68fBB173cE4000000000000000000000000C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2000000000000000000000000ae7ab96520de3a18e5e111b5eaab095312d7fe840000000000000000000000001136B25047E142Fa3018184793aEc68fBB173cE4000000000000000000000000D6BbDE9174b1CdAa358d2Cf4D57D1a9F7178FBfF000000000000000000000000000000000000000000000000000537a5d727172f000000000000000000000000000000000000000000000000000530f83613b1f1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000008200005400003a4060ae7ab96520de3a18e5e111b5eaab095312d7fe84a1903eab00000000000000000000000042f527f50f16a103b6ccab48bccca214500c10210020d6bdbf78ae7ab96520de3a18e5e111b5eaab095312d7fe8480a06c4eca27ae7ab96520de3a18e5e111b5eaab095312d7fe841111111254eeb25477b68fb85ed929f73a960582ea4184f4";
-        dummyImpProxy.leverage(uint8(ILendingLogic.PROTOCOL.PROTOCOL_AAVEV3), firstdeposit_Amount + seconddeposit_Amount, stAmount, _swapData);
-        dummyImpProxy.updateExchangePrice();
-        (uint256 totalAssets, , , ) = dummyImpProxy.getNetAssetsInfo();
+        dummyImpProxy.leverage(uint8(ILendingLogic.PROTOCOL.PROTOCOL_AAVEV3), stBalance, stAmount, _swapData, minimumamount);
+
+        // dummyImpProxy.updateExchangePrice();
+        // (uint256 totalAssets, , , ) = dummyImpProxy.getNetAssetsInfo();
+        // console.log("totalAssets", totalAssets);
 
         bytes memory _deleverageData = hex"12aa3caf000000000000000000000000e37e799d5077682fa0a244d46e5649f71457bd09000000000000000000000000ae7ab96520de3a18e5e111b5eaab095312d7fe84000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000e37e799d5077682fa0a244d46e5649f71457bd090000000000000000000000003fd49a8f37e2349a29ea701b56f10f03b08f153200000000000000000000000000000000000000000000001bb38cb09b209c000000000000000000000000000000000000000000000000001bb1117e7f9ceb435a000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001730000000000000000000000000000000000000000000001550001270000dd00a007e5c0d20000000000000000000000000000000000000000000000b900006a00005051207f39c581f595b53c5cb19bd0b3f8da6c935e2ca0ae7ab96520de3a18e5e111b5eaab095312d7fe840004ea598cb000000000000000000000000000000000000000000000000000000000000000000020d6bdbf787f39c581f595b53c5cb19bd0b3f8da6c935e2ca000a0fbb7cd060093d199263632a4ef4bb438f1feb99e57b4b5f0bd0000000000000000000005c27f39c581f595b53c5cb19bd0b3f8da6c935e2ca0c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200a0f2fa6b66c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200000000000000000000000000000000000000000000001bb221c154a7f3c2ae0000000000000000000b13a5118a898f80a06c4eca27c02aaa39b223fe8d0a0e5c4f27ead9083c756cc21111111254eeb25477b68fb85ed929f73a96058200000000000000000000000000ea4184f4";
-        uint256 withdrawAmount = 100e18;
-        dummyImpProxy.deleverage(uint8(ILendingLogic.PROTOCOL.PROTOCOL_AAVEV3), withdrawAmount, stAmount, _deleverageData);
-        vaultProxy.withdraw(withdrawAmount, secondUser, owner);
-
+        uint256 withdrawAmount = 1e10;
+        stAmount = 1e10;
+        IERC20(WETH_ADDR).approve(address(dummyImpProxy), stAmount * 2);
+        dummyImpProxy.deleverage(uint8(ILendingLogic.PROTOCOL.PROTOCOL_AAVEV3), 0, stAmount, _deleverageData, minimumamount);
+        // vaultProxy.withdraw(withdrawAmount, secondUser, owner);
+        vm.stopPrank();
     }
-
 }

@@ -1,6 +1,5 @@
 node_modules
 cache
-lib
 out
 broadcast
 .env
