@@ -11,6 +11,7 @@ import {ILendingLogic} from "../../lendingLogic/base/ILendingLogic.sol";
 import {FlashloanHelper} from "../../flashloanHelper/FlashloanHelper.sol";
 import {IAggregationRouterV5} from "../../../interfaces/1inch/IAggregationRouterV5.sol";
 import {IWETH} from "../../../interfaces/weth/IWETH.sol";
+import {IPoolV3} from "../../../interfaces/aave/v3/IPoolV3.sol";
 import {Basic} from "../../strategyBase/basic.sol";
 import {OneinchCaller} from "../../1inch/OneinchCaller.sol";
 import {console} from "lib/forge-std/src/console.sol";
@@ -20,6 +21,8 @@ contract LeverageModule is Basic, OneinchCaller{
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
     IAaveOracle public aaveOracleV3 = IAaveOracle(0x54586bE62E3c3580375aE3723C145253060Ca0C2);
+    IPoolV3 public constant aavePoolV3 = IPoolV3(0x794a61358D6845594F94dc1DB02A252b5b4814aD);
+
     address public testSender;
 
     uint256 public logicDepositAmount;
@@ -39,11 +42,11 @@ contract LeverageModule is Basic, OneinchCaller{
             uint256 price = 9989;
             returnAmount = amount * price / 10000;
             IERC20(token).transfer(testSender, amount);
-            IERC20(STETH_ADDR).safeTransferFrom(testSender, address(this), returnAmount);
+            IERC20(WSTETH_ADDR).safeTransferFrom(testSender, address(this), returnAmount);
         } else { //stETH -> wETH
             uint256 price = 1007;
             returnAmount = amount * (price / 1000);
-            IERC20(STETH_ADDR).transfer(testSender, amount);
+            IERC20(WSTETH_ADDR).transfer(testSender, amount);
             IERC20(token).safeTransferFrom(testSender, address(this), returnAmount);
         }
     }
@@ -62,7 +65,7 @@ contract LeverageModule is Basic, OneinchCaller{
         uint256 _minimumAmount
     ) external onlyOwner {
 
-        uint256 balance = IERC20(STETH_ADDR).balanceOf(address(this));
+        uint256 balance = IERC20(WSTETH_ADDR).balanceOf(address(this));
         require(balance >= 0 && balance >= _stETHDepositAmount, "Insufficient stETH balance");
         testSender = msg.sender;
 
@@ -77,6 +80,8 @@ contract LeverageModule is Basic, OneinchCaller{
             _swapData
         );
 
+        uint256 eMode = aavePoolV3.getUserEMode(address(this));
+        console.log("leverage eMode", address(this), eMode);
         IFlashloanHelper(flashloanHelper).flashLoan(
             IERC3156FlashBorrower(
                 address(this)), 
@@ -149,10 +154,11 @@ contract LeverageModule is Basic, OneinchCaller{
 
         executeRepay(_protocolId, WETH_ADDR, wethWithdrawAmount);
 
-        executeWithdraw(_protocolId, STETH_ADDR, _stETHWithdrawAmount);
+        executeWithdraw(_protocolId, WSTETH_ADDR, _stETHWithdrawAmount);
 
-        IERC20(STETH_ADDR).safeTransfer(vault, _stETHWithdrawAmount);
+        IERC20(WSTETH_ADDR).safeTransfer(vault, _stETHWithdrawAmount);
     }
+
 
     /**
     * @dev 
@@ -171,13 +177,23 @@ contract LeverageModule is Basic, OneinchCaller{
             abi.decode(_params, (uint8, uint8, uint256, uint256, bytes));
 
         if (_module == uint8(MODULE.LEVERAGE_MODE)) {
-            (uint256 returnAmount_,) =
-                executeSwap(_amount, WETH_ADDR, STETH_ADDR, _swapData, _minimumAmount);
-
-            executeDeposit(_protocolId, STETH_ADDR, returnAmount_ + logicDepositAmount);
+            // (uint256 returnAmount_,) =
+            //     executeSwap(_amount, WETH_ADDR, WSTETH_ADDR, _swapData, _minimumAmount);
+            console.log("before swap");
+            uint256 returnAmount_ = testSwap(_amount, _token, true);
+            console.log("After swap");
+            uint256 eMode = aavePoolV3.getUserEMode(address(this));
+            console.log("eMode", address(this), eMode);
+            executeDeposit(_protocolId, WSTETH_ADDR, returnAmount_ + logicDepositAmount);
+            console.log("After Deposit");
+            eMode = aavePoolV3.getUserEMode(address(this));
+            console.log("eMode", address(this), eMode);
             uint256 borrowAmount = getAvailableBorrowsETH(_protocolId);
-            executeBorrow(_protocolId, _token, borrowAmount);
-
+            eMode = aavePoolV3.getUserEMode(address(this));
+            console.log("Before Borrow", _token, borrowAmount);
+            console.log("eMode", address(this), eMode);
+            executeBorrow(_protocolId, _token, 10);
+            console.log("After Borrow");
             emit Leverage(returnAmount_ + logicDepositAmount, borrowAmount);
 
         } else {
@@ -191,9 +207,10 @@ contract LeverageModule is Basic, OneinchCaller{
             }
 
             executeRepay(_protocolId, _token, wethWithdrawAmount);
-            executeWithdraw(_protocolId, STETH_ADDR, wethWithdrawAmount);
+            executeWithdraw(_protocolId, WSTETH_ADDR, wethWithdrawAmount);
 
-            executeSwap(_amount, STETH_ADDR, WETH_ADDR, _swapData, _minimumAmount);
+            // executeSwap(_amount, WSTETH_ADDR, WETH_ADDR, _swapData, _minimumAmount);
+            testSwap(_amount, _token, false);
 
             emit Deleverage(wethWithdrawAmount, _amount);
         }

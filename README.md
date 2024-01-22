@@ -37,8 +37,13 @@ $ anvil
 
 ```shell
 $ forge script DeployVault -s "vaultDeployTestnet()" --force --broadcast --verify
+$ forge script DeployMockToken -s "deployERC20()" --force --broadcast --verify
 ```
+### Upgrade
 
+```shell
+$ forge script DeployVault -s "upgradeTestnet()" --force --broadcast --verify
+```
 ### Cast
 
 ```shell

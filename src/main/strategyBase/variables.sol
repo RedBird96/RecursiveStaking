@@ -2,9 +2,15 @@
 pragma solidity ^0.8.0;
 
 contract Constants {
-    address public constant WETH_ADDR = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant STETH_ADDR = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
-    address public constant WSTETH_ADDR = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+
+    //Ethereum
+    // address public constant WETH_ADDR = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    // address public constant STETH_ADDR = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
+    // address public constant WSTETH_ADDR = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+
+    //Arbitrum
+    address public constant WETH_ADDR = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    address public constant WSTETH_ADDR = 0x5979D7b546E38E414F7E9822514be443A4800529;
 
     // Permissible Deviation of Ratio, 0.2%. When the leveraged position is just established,
     // the ratio will be very close to the threshold value, and the value of stETH does

@@ -31,10 +31,17 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
 
     address public immutable implementationAddress;
     address public constant ETH_ADDR = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address public constant WETH_ADDR = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant STETH_ADDR = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
-    address public constant WSTETH_ADDR = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
-    IERC20Upgradeable internal constant STETH_CONTRACT = IERC20Upgradeable(STETH_ADDR);
+    // ethereum
+    // address public constant WETH_ADDR = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    // address public constant STETH_ADDR = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
+    // address public constant WSTETH_ADDR = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+
+    // arbitrum
+    address public constant WETH_ADDR = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    address public constant STETH_ADDR = 0x5979D7b546E38E414F7E9822514be443A4800529;
+    address public constant WSTETH_ADDR = 0x5979D7b546E38E414F7E9822514be443A4800529;
+
+    IERC20Upgradeable internal constant WSTETH_CONTRACT = IERC20Upgradeable(WSTETH_ADDR);
 
     IStrategy public strategy;
     // Who to receive the fee.
@@ -113,7 +120,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
     ) public initializer onlyProxy {
         __Ownable_init();
         __ERC20_init("ETH-stETH strategy pool", "roETH");
-        __ERC4626_init(STETH_CONTRACT);
+        __ERC4626_init(WSTETH_CONTRACT);
         strategy = IStrategy(_strategy);
         require(_feeReceiver != address(0), "Fee receiver cannot be zero address!");
         feeReceiver = _feeReceiver;
@@ -131,8 +138,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         // The maximum fee for withdrawing from the leveraged treasury is 1.2%.
         require(_deleverageExitFeeRate >= 1 && _deleverageExitFeeRate <= 120, "Deleverage Exit fee exceeds the limit!");
         deleverageExitFeeRate = _deleverageExitFeeRate;
-        STETH_CONTRACT.safeIncreaseAllowance(_strategy, type(uint256).max);
-        STETH_CONTRACT.safeIncreaseAllowance(WSTETH_ADDR, type(uint256).max);
+        WSTETH_CONTRACT.safeIncreaseAllowance(_strategy, type(uint256).max);
         lastTimestamp = block.timestamp;
     }
 
@@ -267,7 +273,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
      */
     function _deposit(address _caller, address _receiver, uint256 _assets, uint256 _shares) internal override {
         require(_assets + totalAssets() <= marketCapacity, "Exceeding market capacity.");
-        STETH_CONTRACT.safeTransferFrom(_caller, address(this), _assets);
+        WSTETH_CONTRACT.safeTransferFrom(_caller, address(this), _assets);
         _mint(_receiver, _shares);
         strategy.deposit(_assets);
         totalLockedAmount += _assets;
@@ -288,7 +294,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         returns (uint256 shares)
     {
         if (_assets == type(uint256).max) {
-            _assets = IERC20(STETH_ADDR).balanceOf(msg.sender);
+            _assets = IERC20(WSTETH_ADDR).balanceOf(msg.sender);
         }
         userBalance[msg.sender] += _assets;
         shares = super.deposit(_assets, _receiver);
@@ -414,10 +420,10 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         }
         _burn(_owner, shares);
         if (_token == STETH_ADDR) {
-            STETH_CONTRACT.safeTransfer(_receiver, assetsGet_);
+            // STETH_CONTRACT.safeTransfer(_receiver, assetsGet_);
         } else if (_token == WSTETH_ADDR) {
-            uint256 withdraw_ = IWstETH(WSTETH_ADDR).wrap(assetsGet_);
-            IWstETH(WSTETH_ADDR).safeTransfer(_receiver, withdraw_);
+            // uint256 withdraw_ = IWstETH(WSTETH_ADDR).wrap(assetsGet_);
+            IWstETH(WSTETH_ADDR).safeTransfer(_receiver, assetsGet_);
         } else if (_token == WETH_ADDR) {
             IWETH(WETH_ADDR).safeTransfer(_receiver, assetsGet_);
         } else if (_token == ETH_ADDR) {
@@ -471,7 +477,7 @@ contract VaultStETH is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardU
         uint256 stGet_ = strategy.withdraw(assets_);
         _burn(address(this), managementFeeAcc);
         managementFeeAcc = 0;
-        STETH_CONTRACT.safeTransfer(feeReceiver, stGet_);
+        WSTETH_CONTRACT.safeTransfer(feeReceiver, stGet_);
     }
 
     /**

@@ -21,7 +21,7 @@ contract UserModule is Events {
     function deposit(uint256 _amount) external onlyVault returns (uint256 operateExchangePrice) {
         require(_amount > 0, "deposit: Invalid amount.");
         operateExchangePrice = exchangePrice;
-        IERC20(STETH_ADDR).safeTransferFrom(vault, address(this), _amount);
+        IERC20(WSTETH_ADDR).safeTransferFrom(vault, address(this), _amount);
 
         emit Deposit(_amount);
     }
@@ -33,13 +33,13 @@ contract UserModule is Events {
      */
     function withdraw(uint256 _amount) external onlyVault returns (uint256 withdrawAmount) {
         require(_amount > 0, "withdraw: Invalid amount.");
-        IERC20(STETH_ADDR).safeTransfer(vault, _amount);
+        IERC20(WSTETH_ADDR).safeTransfer(vault, _amount);
         withdrawAmount = _amount;
 
         emit Withdraw(_amount);
     }
 
-    function getAvailableLogicBalance() external onlyOwner returns(uint256 balance) {
-        balance = IERC20(STETH_ADDR).balanceOf(address(this));
+    function getAvailableLogicBalance() external view onlyOwner returns(uint256 balance) {
+        balance = IERC20(WSTETH_ADDR).balanceOf(address(this));
     }
 }

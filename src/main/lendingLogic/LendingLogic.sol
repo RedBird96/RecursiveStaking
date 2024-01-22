@@ -29,9 +29,14 @@ contract LendingLogic is BasicLogic, ILendingLogic {
 
     string public constant ERROR_ID = "ERROR_ID!";
 
-    address public constant WETH_ADDR = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant STETH_ADDR = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
-    address public constant WSTETH_ADDR = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+    //Ethereum
+    // address public constant WETH_ADDR = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    // address public constant STETH_ADDR = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
+    // address public constant WSTETH_ADDR = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+
+    //Arbitrum
+    address public constant WETH_ADDR = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    address public constant WSTETH_ADDR = 0x5979D7b546E38E414F7E9822514be443A4800529;
     IWstETH internal constant WSTETH = IWstETH(WSTETH_ADDR);
 
     // aave v2
@@ -41,11 +46,17 @@ contract LendingLogic is BasicLogic, ILendingLogic {
     IAaveOracle public constant aaveOracleV2 = IAaveOracle(0xA50ba011c48153De246E5192C8f9258A2ba79Ca9);
     IPoolV2 public constant aavePoolV2 = IPoolV2(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
     // aave v3
-    address public constant A_WSTETH_ADDR_AAVEV3 = 0x0B925eD163218f6662a35e0f0371Ac234f9E9371;
-    address public constant D_WETH_ADDR_AAVEV3 = 0xeA51d7853EEFb32b6ee06b1C12E6dcCA88Be0fFE;
-    address public constant aaveWethGatewayV3 = 0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C;
-    IAaveOracle public constant aaveOracleV3 = IAaveOracle(0x54586bE62E3c3580375aE3723C145253060Ca0C2);
-    IPoolV3 public constant aavePoolV3 = IPoolV3(0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2);
+    //Ethreum
+    // address public constant A_WSTETH_ADDR_AAVEV3 = 0x0B925eD163218f6662a35e0f0371Ac234f9E9371;
+    // address public constant D_WETH_ADDR_AAVEV3 = 0xeA51d7853EEFb32b6ee06b1C12E6dcCA88Be0fFE;
+    // address public constant aaveWethGatewayV3 = 0xD322A49006FC828F9B5B37Ab215F99B4E5caB19C;
+    // IAaveOracle public constant aaveOracleV3 = IAaveOracle(0x54586bE62E3c3580375aE3723C145253060Ca0C2);
+    // IPoolV3 public constant aavePoolV3 = IPoolV3(0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2);
+    //Arbitrum
+    address public constant A_WSTETH_ADDR_AAVEV3 = 0x513c7E3a9c69cA3e22550eF58AC1C0088e918FFf;
+    address public constant D_WETH_ADDR_AAVEV3 = 0x77CA01483f379E58174739308945f044e1a764dc;
+    IAaveOracle public constant aaveOracleV3 = IAaveOracle(0xb56c2F0B653B2e0b10C9b928C8580Ac5Df02C7C7);
+    IPoolV3 public constant aavePoolV3 = IPoolV3(0x794a61358D6845594F94dc1DB02A252b5b4814aD);
     // compound v3
     ICWETHV3 public constant compoundWethComet = ICWETHV3(0xA17581A9E3356d9A858b789D68B4d866e593aE94);
     // morpho-aaveV2
@@ -61,12 +72,12 @@ contract LendingLogic is BasicLogic, ILendingLogic {
      * @param _amount The amount of asset being deposited in this transaction.
      */
     function deposit(uint8 _protocolId, address _asset, uint256 _amount) external override onlyDelegation {
-        require(_asset == STETH_ADDR, "Wrong asset!");
+        require(_asset == WSTETH_ADDR, "Wrong asset!");
         if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV2)) {
             aavePoolV2.deposit(_asset, _amount, address(this), 0);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV3)) {
-            uint256 wst_ = WSTETH.wrap(_amount);
-            aavePoolV3.supply(WSTETH_ADDR, wst_, address(this), 0);
+            // uint256 wst_ = WSTETH.wrap(_amount);
+            aavePoolV3.supply(WSTETH_ADDR, _amount, address(this), 0);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_COMPOUNDV3)) {
             uint256 wst_ = WSTETH.wrap(_amount);
             compoundWethComet.supply(WSTETH_ADDR, wst_);
@@ -85,14 +96,14 @@ contract LendingLogic is BasicLogic, ILendingLogic {
      * @param _amount The amount of asset being withdrawn in this transaction.
      */
     function withdraw(uint8 _protocolId, address _asset, uint256 _amount) external override onlyDelegation {
-        require(_asset == STETH_ADDR, "Wrong asset!");
+        require(_asset == WSTETH_ADDR, "Wrong asset!");
         if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV2)) {
             aavePoolV2.withdraw(_asset, _amount, address(this));
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV3)) {
             /// @dev If you don't add 1, it will return 1wei less steth than expected.
-            uint256 withdraw_ = WSTETH.getWstETHByStETH(_amount + 1);
-            aavePoolV3.withdraw(WSTETH_ADDR, withdraw_, address(this));
-            WSTETH.unwrap(withdraw_);
+            // uint256 withdraw_ = WSTETH.getWstETHByStETH(_amount + 1);
+            aavePoolV3.withdraw(WSTETH_ADDR, _amount, address(this));
+            // WSTETH.unwrap(withdraw_);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_COMPOUNDV3)) {
             uint256 withdraw_ = WSTETH.getWstETHByStETH(_amount + 1);
             compoundWethComet.withdraw(WSTETH_ADDR, withdraw_);
@@ -156,7 +167,7 @@ contract LendingLogic is BasicLogic, ILendingLogic {
     function enterProtocol(uint8 _protocolId) external override onlyDelegation {
         if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV2)) {
             IERC20(WETH_ADDR).safeIncreaseAllowance(address(aavePoolV2), type(uint256).max);
-            IERC20(STETH_ADDR).safeIncreaseAllowance(address(aavePoolV2), type(uint256).max);
+            IERC20(WSTETH_ADDR).safeIncreaseAllowance(address(aavePoolV2), type(uint256).max);
             IERC20(A_STETH_ADDR_AAVEV2).safeIncreaseAllowance(address(aavePoolV2), type(uint256).max);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV3)) {
             IERC20(WETH_ADDR).safeIncreaseAllowance(address(aavePoolV3), type(uint256).max);
@@ -167,7 +178,7 @@ contract LendingLogic is BasicLogic, ILendingLogic {
             IERC20(WETH_ADDR).safeIncreaseAllowance(address(compoundWethComet), type(uint256).max);
             IERC20(WSTETH_ADDR).safeIncreaseAllowance(address(compoundWethComet), type(uint256).max);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_MORPHO_AAVEV2)) {
-            IERC20(STETH_ADDR).safeIncreaseAllowance(address(morphoPool), type(uint256).max);
+            IERC20(WSTETH_ADDR).safeIncreaseAllowance(address(morphoPool), type(uint256).max);
             IERC20(WETH_ADDR).safeIncreaseAllowance(address(morphoPool), type(uint256).max);
         } else {
             revert(ERROR_ID);
@@ -182,7 +193,7 @@ contract LendingLogic is BasicLogic, ILendingLogic {
     function exitProtocol(uint8 _protocolId) external override onlyDelegation {
         if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV2)) {
             IERC20(WETH_ADDR).safeApprove(address(aavePoolV2), 0);
-            IERC20(STETH_ADDR).safeApprove(address(aavePoolV2), 0);
+            IERC20(WSTETH_ADDR).safeApprove(address(aavePoolV2), 0);
             IERC20(A_STETH_ADDR_AAVEV2).safeApprove(address(aavePoolV2), 0);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV3)) {
             IERC20(WETH_ADDR).safeApprove(address(aavePoolV3), 0);
@@ -192,7 +203,7 @@ contract LendingLogic is BasicLogic, ILendingLogic {
             IERC20(WETH_ADDR).safeApprove(address(compoundWethComet), 0);
             IERC20(WSTETH_ADDR).safeApprove(address(compoundWethComet), 0);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_MORPHO_AAVEV2)) {
-            IERC20(STETH_ADDR).safeApprove(address(morphoPool), 0);
+            IERC20(WSTETH_ADDR).safeApprove(address(morphoPool), 0);
             IERC20(WETH_ADDR).safeApprove(address(morphoPool), 0);
         } else {
             revert(ERROR_ID);
@@ -217,8 +228,8 @@ contract LendingLogic is BasicLogic, ILendingLogic {
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV3)) {
             (,, uint256 availableBorrowsInUsd_,,,) = aavePoolV3.getUserAccountData(_account);
             if (availableBorrowsInUsd_ > 0) {
-                uint256 WEthPrice_ = aaveOracleV3.getAssetPrice(WETH_ADDR);
-                availableBorrowsETH = availableBorrowsInUsd_ * 1e18 / WEthPrice_;
+                uint256 wEthPrice_ = aaveOracleV3.getAssetPrice(WETH_ADDR);
+                availableBorrowsETH = availableBorrowsInUsd_ * 1e18 / wEthPrice_;
             }
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_COMPOUNDV3)) {
             ICWETHV3.AssetInfo memory assetInfo_ = compoundWethComet.getAssetInfoByAddress(WSTETH_ADDR);
@@ -239,19 +250,19 @@ contract LendingLogic is BasicLogic, ILendingLogic {
      * withdraw in the lending protocol.
      * @param _protocolId The index of the lending protocol within this contract.
      * @param _account The account address.
-     * @return maxWithdrawsStETH The maximum amount of stETH that can still be withdrawn.
+     * @return maxWithdrawsWStETH The maximum amount of wstETH that can still be withdrawn.
      */
     function getAvailableWithdrawsStETH(uint8 _protocolId, address _account)
         public
         view
         override
-        returns (uint256 maxWithdrawsStETH)
+        returns (uint256 maxWithdrawsWStETH)
     {
         if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV2)) {
             (uint256 colInETH_, uint256 debtInETH_,,, uint256 ltv_,) = aavePoolV2.getUserAccountData(_account);
-            uint256 aavePrice_ = aaveOracleV2.getAssetPrice(STETH_ADDR);
+            uint256 aavePrice_ = aaveOracleV2.getAssetPrice(WSTETH_ADDR);
             if (colInETH_ > 0) {
-                maxWithdrawsStETH = colInETH_ > (debtInETH_ * 1e4) / ltv_
+                maxWithdrawsWStETH = colInETH_ > (debtInETH_ * 1e4) / ltv_
                     ? ((colInETH_ - (debtInETH_ * 1e4) / ltv_) * 1e18) / aavePrice_
                     : 0;
             }
@@ -260,9 +271,8 @@ contract LendingLogic is BasicLogic, ILendingLogic {
             if (colInUsd_ > 0) {
                 uint256 colMin_ = debtInUsd_ * 1e4 / ltv_;
                 uint256 maxWithdrawsInUsd_ = colInUsd_ > colMin_ ? colInUsd_ - colMin_ : 0;
-                uint256 WstEthPrice_ = aaveOracleV3.getAssetPrice(WSTETH_ADDR);
-                uint256 maxWithdrawsWstETH_ = maxWithdrawsInUsd_ * 1e18 / WstEthPrice_;
-                maxWithdrawsStETH = WSTETH.getStETHByWstETH(maxWithdrawsWstETH_);
+                uint256 wstEthPrice_ = aaveOracleV3.getAssetPrice(WSTETH_ADDR);
+                maxWithdrawsWStETH = maxWithdrawsInUsd_ * 1e18 / wstEthPrice_;
             }
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_COMPOUNDV3)) {
             ICWETHV3.AssetInfo memory assetInfo_ = compoundWethComet.getAssetInfoByAddress(WSTETH_ADDR);
@@ -272,9 +282,9 @@ contract LendingLogic is BasicLogic, ILendingLogic {
             uint256 collateralMin_ = (borrowedBalance_ * 1e26) / (assetInfo_.borrowCollateralFactor * price_);
             uint256 maxWithdrawsWstETH_ = collateralBalance_ - collateralMin_;
             uint256 stEthPerToken_ = WSTETH.stEthPerToken();
-            maxWithdrawsStETH = (maxWithdrawsWstETH_ * stEthPerToken_) / 1e18;
+            maxWithdrawsWStETH = (maxWithdrawsWstETH_ * stEthPerToken_) / 1e18;
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_MORPHO_AAVEV2)) {
-            (maxWithdrawsStETH,) = morphoAaveLens.getUserMaxCapacitiesForAsset(_account, A_STETH_ADDR_AAVEV2);
+            (maxWithdrawsWStETH,) = morphoAaveLens.getUserMaxCapacitiesForAsset(_account, A_STETH_ADDR_AAVEV2);
         } else {
             revert(ERROR_ID);
         }
@@ -338,7 +348,7 @@ contract LendingLogic is BasicLogic, ILendingLogic {
         uint256 totalDebtETH_;
         uint256 depositOrWithdrawInETH_;
         if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV2)) {
-            uint256 stPrice_ = aaveOracleV2.getAssetPrice(STETH_ADDR);
+            uint256 stPrice_ = aaveOracleV2.getAssetPrice(WSTETH_ADDR);
             uint256 ethPrice_ = aaveOracleV2.getAssetPrice(WETH_ADDR);
             (totalCollateralETH_, totalDebtETH_,,,,) = aavePoolV2.getUserAccountData(_account);
             depositOrWithdrawInETH_ = _depositOrWithdraw * stPrice_ / ethPrice_;
@@ -347,16 +357,16 @@ contract LendingLogic is BasicLogic, ILendingLogic {
             uint256 ethPrice_ = aaveOracleV3.getAssetPrice(WETH_ADDR);
             totalCollateralETH_ = IERC20(A_WSTETH_ADDR_AAVEV3).balanceOf(_account) * wstPrice_ / ethPrice_;
             totalDebtETH_ = IERC20(D_WETH_ADDR_AAVEV3).balanceOf(_account);
-            depositOrWithdrawInETH_ = WSTETH.getWstETHByStETH(_depositOrWithdraw) * wstPrice_ / ethPrice_;
+            depositOrWithdrawInETH_ = _depositOrWithdraw * wstPrice_ / ethPrice_;
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_COMPOUNDV3)) {
             ICWETHV3.AssetInfo memory assetInfo_ = compoundWethComet.getAssetInfoByAddress(WSTETH_ADDR);
             uint256 price_ = compoundWethComet.getPrice(assetInfo_.priceFeed);
             totalCollateralETH_ = compoundWethComet.collateralBalanceOf(_account, WSTETH_ADDR) * price_ / 1e8;
             totalDebtETH_ = compoundWethComet.borrowBalanceOf(_account);
-            depositOrWithdrawInETH_ = WSTETH.getWstETHByStETH(_depositOrWithdraw) * price_ / 1e8;
+            depositOrWithdrawInETH_ = _depositOrWithdraw * price_ / 1e8;
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_MORPHO_AAVEV2)) {
             (totalCollateralETH_,,, totalDebtETH_) = morphoAaveLens.getUserBalanceStates(_account);
-            uint256 stPrice_ = aaveOracleV2.getAssetPrice(STETH_ADDR);
+            uint256 stPrice_ = aaveOracleV2.getAssetPrice(WSTETH_ADDR);
             depositOrWithdrawInETH_ = _depositOrWithdraw * stPrice_ / 1e18;
         } else {
             revert(ERROR_ID);
@@ -379,31 +389,29 @@ contract LendingLogic is BasicLogic, ILendingLogic {
      * @dev Retrieve the collateral and debt quantities of the account in the lending protocol.
      * @param _protocolId The index of the lending protocol within this contract.
      * @param _account The account address.
-     * @return stEthAmount The amount of stETH collateral.
+     * @return wstEthAmount The amount of wstETH collateral.
      * @return debtEthAmount The amount of ETH debt.
      */
     function getProtocolAccountData(uint8 _protocolId, address _account)
         public
         view
         override
-        returns (uint256 stEthAmount, uint256 debtEthAmount)
+        returns (uint256 wstEthAmount, uint256 debtEthAmount)
     {
         if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV2)) {
-            stEthAmount = IERC20(A_STETH_ADDR_AAVEV2).balanceOf(_account);
+            wstEthAmount = IERC20(A_STETH_ADDR_AAVEV2).balanceOf(_account);
             debtEthAmount = IERC20(D_WETH_ADDR_AAVEV2).balanceOf(_account);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_AAVEV3)) {
-            uint256 wstEthAmount_ = IERC20(A_WSTETH_ADDR_AAVEV3).balanceOf(_account);
-            stEthAmount = WSTETH.getStETHByWstETH(wstEthAmount_);
+            wstEthAmount = IERC20(A_WSTETH_ADDR_AAVEV3).balanceOf(_account);
             debtEthAmount = IERC20(D_WETH_ADDR_AAVEV3).balanceOf(_account);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_COMPOUNDV3)) {
-            uint256 wstEthAmount_ = compoundWethComet.collateralBalanceOf(_account, WSTETH_ADDR);
-            stEthAmount = WSTETH.getStETHByWstETH(wstEthAmount_);
+            wstEthAmount = compoundWethComet.collateralBalanceOf(_account, WSTETH_ADDR);
             debtEthAmount = compoundWethComet.borrowBalanceOf(_account);
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_MORPHO_AAVEV2)) {
-            uint256 stPrice_ = aaveOracleV2.getAssetPrice(STETH_ADDR);
+            uint256 stPrice_ = aaveOracleV2.getAssetPrice(WSTETH_ADDR);
             uint256 collateralEth;
             (collateralEth,,, debtEthAmount) = morphoAaveLens.getUserBalanceStates(_account);
-            stEthAmount = collateralEth * 1e18 / stPrice_;
+            wstEthAmount = collateralEth * 1e18 / stPrice_;
         } else {
             revert(ERROR_ID);
         }

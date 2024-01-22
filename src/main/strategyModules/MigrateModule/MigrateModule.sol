@@ -25,7 +25,7 @@ contract MigrateModule is Basic {
         (uint256 swapGetMin, uint8 _protocolId, bytes memory swapBytes) = 
             abi.decode(_params, (uint256, uint8, bytes));
 
-        executeDeposit(_protocolId, STETH_ADDR, _amount);
+        executeDeposit(_protocolId, WSTETH_ADDR, _amount);
         executeBorrow(_protocolId, WETH_ADDR, _amount);
 
         return CALLBACK_SUCCESS;
@@ -41,8 +41,8 @@ contract MigrateModule is Basic {
         (uint8 fromProtocolId_, uint8 toProtocolId_, uint256 stAmount_, uint256 _debtAmount) = 
         abi.decode(_callbackData, (uint8, uint8, uint256, uint256));
         executeRepay(fromProtocolId_, WETH_ADDR, _debtAmount);
-        executeWithdraw(fromProtocolId_, STETH_ADDR, stAmount_);
-        executeDeposit(toProtocolId_, STETH_ADDR, stAmount_);
+        executeWithdraw(fromProtocolId_, WSTETH_ADDR, stAmount_);
+        executeDeposit(toProtocolId_, WSTETH_ADDR, stAmount_);
         executeBorrow(toProtocolId_, WETH_ADDR, _debtAmount);
         _loanTokens[0].safeTransfer(balancerVault, _loanAmounts[0]);
         executor = address(0);

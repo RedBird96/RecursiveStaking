@@ -186,13 +186,13 @@ contract Basic is Variables, OwnableUpgradeable {
     /**
      * @dev Retrieve the collateral and debt quantities of this strategy pool in the lending protocol.
      * @param _protocolId The index of the lending protocol within this contract.
-     * @return stEthAmount The amount of stETH collateral.
+     * @return wstEthAmount The amount of stETH collateral.
      * @return debtEthAmount The amount of ETH debt.
      */
     function getProtocolAccountData(uint8 _protocolId)
         public
         view
-        returns (uint256 stEthAmount, uint256 debtEthAmount)
+        returns (uint256 wstEthAmount, uint256 debtEthAmount)
     {
         return ILendingLogic(lendingLogic).getProtocolAccountData(_protocolId, address(this));
     }
@@ -203,8 +203,8 @@ contract Basic is Variables, OwnableUpgradeable {
      * @return net The amount of net assets.
      */
     function getProtocolNetAssets(uint8 _protocolId) public view returns (uint256 net) {
-        (uint256 stEthAmount, uint256 debtEthAmount) = getProtocolAccountData(_protocolId);
-        net = stEthAmount - debtEthAmount;
+        (uint256 wstEthAmount, uint256 debtEthAmount) = getProtocolAccountData(_protocolId);
+        net = wstEthAmount - debtEthAmount;
     }
 
     /**
@@ -213,8 +213,8 @@ contract Basic is Variables, OwnableUpgradeable {
      * @return ratio The debt collateralization ratio, where 1e18 represents 100%.
      */
     function getProtocolRatio(uint8 _protocolId) public view returns (uint256 ratio) {
-        (uint256 stEthAmount, uint256 debtEthAmount) = getProtocolAccountData(_protocolId);
-        ratio = debtEthAmount * 1e18 / stEthAmount;
+        (uint256 wstEthAmount, uint256 debtEthAmount) = getProtocolAccountData(_protocolId);
+        ratio = debtEthAmount * 1e18 / wstEthAmount;
     }
 
     /**
@@ -269,7 +269,7 @@ contract Basic is Variables, OwnableUpgradeable {
      */
     function getNetAssets() public view returns (uint256) {
         (,, uint256 currentNetAssets_,) = getNetAssetsInfo();
-        return currentNetAssets_ + IERC20(STETH_ADDR).balanceOf(address(this)) - revenue;
+        return currentNetAssets_ + IERC20(WSTETH_ADDR).balanceOf(address(this)) - revenue;
     }
 
     /**

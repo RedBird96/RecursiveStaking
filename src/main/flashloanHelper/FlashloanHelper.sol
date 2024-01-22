@@ -23,7 +23,10 @@ contract FlashloanHelper is IFlashloanHelper, IFlashLoanSimpleReceiver, IFlashLo
     using SafeERC20 for IERC20;
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
-    address public constant aaveV3Pool = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
+    // ethereum
+    //address public constant aaveV3Pool = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
+    // arbitrum
+    address public constant aaveV3Pool = 0x794a61358D6845594F94dc1DB02A252b5b4814aD;
     address public constant balancerVault = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
     // Prevent re-entry calls by using this flag.
     address public executor;
@@ -42,6 +45,7 @@ contract FlashloanHelper is IFlashloanHelper, IFlashLoanSimpleReceiver, IFlashLo
         returns (bool)
     {
         require(executor == address(0) && address(_receiver) == msg.sender, "FlashloanHelper: In progress!");
+        
         executor = msg.sender;
         (, uint256 flashloanSelector_,,,,, ) = 
             abi.decode(_dataBytes, (uint256, uint256, uint8, uint8, uint256, uint256, bytes));

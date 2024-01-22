@@ -58,12 +58,8 @@ contract AdminModule is Events {
         lendingLogic = _lendingLogic;
         feeReceiver = _feeReceiver;
         exchangePrice = 1e18;
-        IERC20(STETH_ADDR).safeIncreaseAllowance(WSTETH_ADDR, type(uint256).max);
 
-        executeEnterProtocol(uint8(ILendingLogic.PROTOCOL.PROTOCOL_AAVEV2));
         executeEnterProtocol(uint8(ILendingLogic.PROTOCOL.PROTOCOL_AAVEV3));
-        executeEnterProtocol(uint8(ILendingLogic.PROTOCOL.PROTOCOL_COMPOUNDV3));
-        executeEnterProtocol(uint8(ILendingLogic.PROTOCOL.PROTOCOL_MORPHO_AAVEV2));
     }
 
     /**
@@ -197,7 +193,7 @@ contract AdminModule is Events {
      */
     function collectRevenue() public {
         require(msg.sender == feeReceiver || msg.sender == owner(), "feeReceiver: Wut?");
-        IERC20(STETH_ADDR).safeTransfer(feeReceiver, revenue);
+        IERC20(WSTETH_ADDR).safeTransfer(feeReceiver, revenue);
         //emit CollectRevenue(revenue);
         revenue = 0;
     }
