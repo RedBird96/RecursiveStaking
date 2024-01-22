@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract MockERC20 {
+contract MockStToken {
     string public name = "Mock stETH";
     string public symbol = "mstETH";
     uint8 public immutable decimals;

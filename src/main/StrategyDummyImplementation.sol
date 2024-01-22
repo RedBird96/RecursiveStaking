@@ -150,4 +150,6 @@ contract StrategyDummyImplementation {
     function deposit(uint256 _stAmount) external returns (uint256 operateExchangePrice_) {}
 
     function withdraw(uint256 _stAmount) external returns (uint256 userStGet_) {}
+
+    function getAvailableLogicBalance() external view returns (uint256 balance) {}
 }

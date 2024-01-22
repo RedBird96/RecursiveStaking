@@ -173,7 +173,9 @@ contract LendingLogic is BasicLogic, ILendingLogic {
             IERC20(WETH_ADDR).safeIncreaseAllowance(address(aavePoolV3), type(uint256).max);
             IERC20(WSTETH_ADDR).safeIncreaseAllowance(address(aavePoolV3), type(uint256).max);
             IERC20(A_WSTETH_ADDR_AAVEV3).safeIncreaseAllowance(address(aavePoolV3), type(uint256).max);
-            aavePoolV3.setUserEMode(1);
+            // console.log("before setUserEMode");
+            // aavePoolV3.setUserEMode(8);
+            // console.log("after setUserEMode");
         } else if (_protocolId == uint8(PROTOCOL.PROTOCOL_COMPOUNDV3)) {
             IERC20(WETH_ADDR).safeIncreaseAllowance(address(compoundWethComet), type(uint256).max);
             IERC20(WSTETH_ADDR).safeIncreaseAllowance(address(compoundWethComet), type(uint256).max);
@@ -434,11 +436,14 @@ contract LendingLogic is BasicLogic, ILendingLogic {
     {
         uint256 protocolAsset_;
         uint256 protocolDebt_;
-        for (uint8 protocolId_ = 0; protocolId_ <= uint8(PROTOCOL.PROTOCOL_MORPHO_AAVEV2); protocolId_++) {
-            (protocolAsset_, protocolDebt_) = getProtocolAccountData(protocolId_, _account);
-            totalAssets += protocolAsset_;
-            totalDebt += protocolDebt_;
-        }
+        (protocolAsset_, protocolDebt_) = getProtocolAccountData(uint8(PROTOCOL.PROTOCOL_AAVEV3), _account);
+        totalAssets += protocolAsset_;
+        totalDebt += protocolDebt_;
+        // for (uint8 protocolId_ = 0; protocolId_ <= uint8(PROTOCOL.PROTOCOL_MORPHO_AAVEV2); protocolId_++) {
+        //     (protocolAsset_, protocolDebt_) = getProtocolAccountData(protocolId_, _account);
+        //     totalAssets += protocolAsset_;
+        //     totalDebt += protocolDebt_;
+        // }
         netAssets = totalAssets - totalDebt;
         aggregatedRatio = totalAssets == 0 ? 0 : (totalDebt * 1e18) / totalAssets;
     }

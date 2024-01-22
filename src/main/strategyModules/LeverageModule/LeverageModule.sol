@@ -20,8 +20,8 @@ contract LeverageModule is Basic, OneinchCaller{
     using SafeERC20 for IERC20;
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
-    IAaveOracle public aaveOracleV3 = IAaveOracle(0x54586bE62E3c3580375aE3723C145253060Ca0C2);
-    IPoolV3 public constant aavePoolV3 = IPoolV3(0x794a61358D6845594F94dc1DB02A252b5b4814aD);
+    // IAaveOracle public aaveOracleV3 = IAaveOracle(0x54586bE62E3c3580375aE3723C145253060Ca0C2);  //ethereum
+    IAaveOracle public constant aaveOracleV3 = IAaveOracle(0xb56c2F0B653B2e0b10C9b928C8580Ac5Df02C7C7); 
 
     address public testSender;
 
@@ -80,8 +80,6 @@ contract LeverageModule is Basic, OneinchCaller{
             _swapData
         );
 
-        uint256 eMode = aavePoolV3.getUserEMode(address(this));
-        console.log("leverage eMode", address(this), eMode);
         IFlashloanHelper(flashloanHelper).flashLoan(
             IERC3156FlashBorrower(
                 address(this)), 
@@ -179,21 +177,10 @@ contract LeverageModule is Basic, OneinchCaller{
         if (_module == uint8(MODULE.LEVERAGE_MODE)) {
             // (uint256 returnAmount_,) =
             //     executeSwap(_amount, WETH_ADDR, WSTETH_ADDR, _swapData, _minimumAmount);
-            console.log("before swap");
             uint256 returnAmount_ = testSwap(_amount, _token, true);
-            console.log("After swap");
-            uint256 eMode = aavePoolV3.getUserEMode(address(this));
-            console.log("eMode", address(this), eMode);
             executeDeposit(_protocolId, WSTETH_ADDR, returnAmount_ + logicDepositAmount);
-            console.log("After Deposit");
-            eMode = aavePoolV3.getUserEMode(address(this));
-            console.log("eMode", address(this), eMode);
             uint256 borrowAmount = getAvailableBorrowsETH(_protocolId);
-            eMode = aavePoolV3.getUserEMode(address(this));
-            console.log("Before Borrow", _token, borrowAmount);
-            console.log("eMode", address(this), eMode);
-            executeBorrow(_protocolId, _token, 10);
-            console.log("After Borrow");
+            executeBorrow(_protocolId, _token, borrowAmount);
             emit Leverage(returnAmount_ + logicDepositAmount, borrowAmount);
 
         } else {

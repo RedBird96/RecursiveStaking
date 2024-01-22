@@ -51,6 +51,11 @@ contract DeployVault is BaseDeployer {
         _chainVault();
     }
 
+    function upgradeTestnet() external setEnvDeploy(Cycle.Test) {
+        createSelectFork(Chains.Sepolia);
+        upgradeStrategy();
+    }
+
     function vaultDeployTestnet() external setEnvDeploy(Cycle.Test) {
         createSelectFork(Chains.Sepolia);
         _chainVault();
@@ -162,6 +167,17 @@ contract DeployVault is BaseDeployer {
         );
 
         dummyImpProxy.setVault(address(vaultProxy));
+    }
+
+    function upgradeStrategy() public broadcast(_deployerPrivateKey) {
+        strategyProxy = StrategyProxy(payable(0xf45E15ae901f7cb28315Bd22aa03aFC9c820a05d));
+        dummyImpl = new StrategyDummyImplementation();
+        userProxy = new UserModule();
+        strategyProxy.setDummyImplementation(address(dummyImpl));
+        bytes4[] memory userSigArray = new bytes4[](3);
+        userSigArray[0] = 0xB6B55F25; userSigArray[1] = 0x2E1A7D4D; userSigArray[2] = 0xab7ce244;
+        strategyProxy.removeImplementation(address(0x0A32cee6ccA126FF102DF67251a4d640734fd553));
+        strategyProxy.addImplementation(address(userProxy), userSigArray);
     }
 
 }
